@@ -38,6 +38,50 @@ extern int64_t W_wval;
 static comb_logic_t 
 generate_DXMW_control(opcode_t op,
                       d_ctl_sigs_t *D_sigs, x_ctl_sigs_t *X_sigs, m_ctl_sigs_t *M_sigs, w_ctl_sigs_t *W_sigs) {
+    //Buffering a signal in a pipeline reigster means the signal is stored in the 
+    //reg temp, allowing next stage of pipeline to operate on the signal w/o interfering
+    //with the previous stage
+
+    //update the boolean fields for this 
+
+    //you generate one ctrl sig used to select src2
+    d_ctl_sigs_t D_sigs; 
+    //if it's a memory store instruction, chaneg the value to a 1
+    //create local var to see if it errs out
+    if(op == OP_STUR){
+        D_sigs -> src2_sel = 1; 
+        M_sigs -> dmem_write = 1; 
+    }
+
+    //if it's a register operation
+    if(op == OP_TST_RR || op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_SUBS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_ADDS_RR){
+        X_sigs -> valb_sel = 1; 
+    }
+
+    if(op == OP_ADDS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_TST_RR){
+        X_sigs -> set_CC = 1; 
+    }
+
+    if(op == OP_LDUR){
+        M_sigs -> dmem_read = 1; 
+        W_sigs -> wval_sel = 1; 
+    }
+
+    if(op == OP_BL){
+        W_sigs -> dst_sel = 1; 
+    }
+
+    if(op != OP_STUR || op != OP_B || op != OP_B_COND || op != OP_RET || op != OP_NOP || op != OP_HLT || op != OP_CMP_RR || op != OP_TST_RR){
+        W_sigs -> w_enable = 1; 
+    } 
+
+    //how to update ALUop condition [3:0]
+    //how to update cond: iword[3:0]
+
+
+
+
+    //you generate one ctrl sig used to select src2
     return;
 }
 
@@ -49,6 +93,26 @@ generate_DXMW_control(opcode_t op,
 
 static comb_logic_t 
 extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
+    //first, figure out the format of the instruction
+    //in the case that the format of the instruction is M format 
+    if(bitfield_u32(insnbits, 10, 1) == 0x00){
+        *imm = bitfield_s64(insnbits, 12, 9); //location of the format register 
+    }
+
+    //in the case that the format of the instruction is in RI format
+    if(bitfield_u32(insnbits, 24, 1) == 0x01){
+        *imm = bitfield_s64(insnbits, 10, 12); 
+    }
+
+    //in the case that its in I2 format
+    if(bitfield_u32(insnbits, 24, 4)  == 0x00){
+        *imm = bitfield_s64(insnbits, 5, 16); 
+    }
+
+    //in the case that the format is in I1
+    if(bitfield_u32(insnbits, 23, 1) == 0x01){
+        *imm = bitfield_s64(insnbits, 5, 19); 
+    }
     return;
 }
 
@@ -60,6 +124,40 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
  */
 static comb_logic_t
 decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
+    //for LDUR, STUR, ADRP (use this to compute an add)
+    if(op == OP_LDUR || op == OP_STUR || op == OP_ADRP){
+        *ALU_op = PLUS_OP; 
+    }
+
+    //for MOVK and MOVZ, you're going to do a shift and merge
+    if(op == OP_MOVK || op == OP_MOVZ){
+
+    }
+
+    //for ADDS, SUBS, ANDS, TST, and CMP (do wtv operation + modify NZCV)
+    //how does the instruction aliases affect this? 
+    if(op == OP_ADDS_RR){
+        *ALU_op = PLUS_OP; 
+    }
+
+    if(op == OP_SUBS_RR){
+        *ALU_op = MINUS_OP; 
+
+    }
+    //Other computations just do their respective instructions
+    //B, BL, B.cond (addition to determine branch_target)
+    if(op == OP_B || op == OP_B_COND){
+        *ALU_op = PLUS_OP; 
+    }
+
+    // if(op == OP_BL){
+    //     va
+    //     *ALU_op = PASS_A_OP; 
+    // }
+    //B.cond (deetermine truth value of cond based on NZCV)
+    //pass val_a, pass_val b (-13:20, 3/23)
+    //NZCV resides within the ALU
+
     return;
 }
 
@@ -72,18 +170,35 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
 comb_logic_t 
 copy_m_ctl_sigs(m_ctl_sigs_t *dest, m_ctl_sigs_t *src) {
+    dest -> dmem_read = src->dmem_read;
+    dest -> dmem_write = src->dmem_write;
     return;
 }
 
 comb_logic_t 
 copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
+    dest -> dst_sel = src -> dst_sel;
+    dest -> wval_sel = src -> wval_sel;
+    dest -> w_enable = src -> w_enable;
     return;
 }
 
+//For this function, figure out what src1, src2, and dst will be for the instruction
 comb_logic_t
 extract_regs(uint32_t insnbits, opcode_t op, 
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
+    //src1 always comes from this location iword[9:5]
+
+    //How to access src2_sel from here?
+    *src1 = bitfield_u32(insnbits, 5, 4); 
+
+    //how to 
+    
+    
+    //dst, val-w, and w-enable come from writeback
     return;
+
+    //make temp variable? extract registers 
 }
 
 /*
@@ -102,5 +217,13 @@ extract_regs(uint32_t insnbits, opcode_t op,
  */
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
+    generate_DXMW_control();
+    regfile()
+    extract_immval()
+    decide_alu_op()
     return;
 }
+
+
+//check writeback sigs w_val select
+//its supposed to run 11 in the first cycle 
