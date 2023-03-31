@@ -40,7 +40,7 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     // dmem_read dmem_write 1 if write 0 not
 
     // seq_succ_pc comes in here and is sent to select_pc
-    
+    // what does it mean to buffer m_sigs and w_sigs??
     
     
     
