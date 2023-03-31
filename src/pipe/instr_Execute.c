@@ -37,5 +37,32 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
+    out->op = in->op; // simply continues on 
+    out->dst = in->dst;
+    out->M_sigs = in->M_sigs;
+    out->W_sigs = in->W_sigs;
+
+
+    // x sigs become valb_sel -- into mux and set_cc -- into alu
+    
+
+    // into alu -- set_cc from x sigs, alu op, cond, val a, hw, result of mux
+    // into mux -- val b, val imm
+    
+    // alu uses cond
+    // take alu op and just do whatever operation taht is
+    // how do we get cond val tho??
+
+
+    // mux uses valb_sel 0 for immediate 1 for register
+    if (in->X_sigs.valb_sel == 0) {
+        out->val_b = in->val_imm;
+    } else {
+        out->val_b = in->val_b;
+    }
+
+
+    
+    
     return;
 }
