@@ -198,24 +198,72 @@ comb_logic_t
 extract_regs(uint32_t insnbits, opcode_t op, 
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
     //src1 always comes from this location iword[9:5]
-    *src1 = bitfield_u32(insnbits, 5, 5); 
 
-    //src2 depends if it's 
-    if(op == OP_STUR){
-        *src2 = bitfield_u32(insnbits, 0, 5); 
+
+    //format has none
+    if(op == OP_B || op == OP_B_COND || op == OP_NOP || op == OP_HLT){
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
+        *dst = XZR_NUM;
     }
 
-    else{
-        *src2 = bitfield_u32(insnbits, 16, 5); 
-    }
-
-    if(op == OP_BL){
-        *dst = 30; 
-    }
-
-    else{
+    //format has only dst
+    if( (op = OP_MOVK) || op == OP_MOVZ || op == OP_ADRP){
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5); 
     }
+
+    //format has only src1
+    if(op == OP_RET){
+        *src1 = bitfield_u32(insnbits, 0, 5); 
+        *src2 = XZR_NUM;
+        *dst = XZR_NUM;
+    }
+
+    //format has all three values 
+    if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_ADDS_RR || op == OP_MVN
+        || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR){
+            *src1 = bitfield_u32(insnbits, 5, 5); 
+            *src2 = bitfield_u32(insnbits, 15, 5); 
+            *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    //format has only src1 and src2
+    // if(op == OP_ADD_RI || op == OP_SUB_RI || op = OP_LSL || op == OP_LSR){
+
+    // }
+
+    //format has src1 and src2
+    if(op == OP_LDUR || op == OP_STUR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = bitfield_u32(insnbits, 0, 5);
+        *dst = XZR_NUM; 
+    }
+
+
+    //new iteration assuming src2 is RT
+    // *src1 = bitfield_u32(insnbits, 5, 5); 
+
+
+    // //src2 depends if it's 
+    // if(op == OP_STUR){
+    //     *src2 = bitfield_u32(insnbits, 0, 5); 
+    //     *dst = bitfield_u32(insnbits, 0, 5); 
+    // }
+
+    // else{
+    //     //*src2 = bitfield_u32(insnbits, 16, 5); 
+    //     *src2 = XZR_NUM;  
+    // }
+
+    // if(op == OP_BL){
+    //     *dst = 30; 
+    // }
+
+    // if(op != OP_BL|| op != OP_STUR){
+    //     *dst = bitfield_u32(insnbits, 0, 5); 
+    // }
     
     
     //dst, val-w, and w-enable come from writeback
@@ -246,7 +294,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     extract_immval(D_in -> insnbits, D_in -> op, &(X_in -> val_imm)); 
     extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), src1, src2, dst); 
     decide_alu_op(D_in -> op, &(X_in -> ALU_op));
-    regfile(*src1, *src2, *dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
+    regfile(*src1, *src2, W_out -> dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
     return;
 }
 
