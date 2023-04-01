@@ -73,11 +73,6 @@ generate_DXMW_control(opcode_t op,
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
-
-
-
-
-    //you generate one ctrl sig used to select src2
     return;
 }
 
@@ -107,7 +102,7 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
 
     //in the case that the format is in I1
     if(bitfield_u32(insnbits, 23, 1) == 0x01){
-        *imm = bitfield_s64(insnbits, 5, 19); 
+        *imm = bitfield_s64(insnbits, 5, 19);   
     }
     return;
 }
@@ -127,7 +122,9 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //for MOVK and MOVZ, you're going to do a shift and merge
     if(op == OP_MOVK || op == OP_MOVZ){
-        
+        X_in -> val_hw = bitfield_u32(D_in -> insnbits, 21, 2); 
+        //*ALU_op = ;
+
     }
 
     //for ADDS, SUBS, ANDS, TST, and CMP (do wtv operation + modify NZCV)
@@ -201,24 +198,72 @@ comb_logic_t
 extract_regs(uint32_t insnbits, opcode_t op, 
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
     //src1 always comes from this location iword[9:5]
-    *src1 = bitfield_u32(insnbits, 5, 5); 
 
-    //src2 depends if it's 
-    if(op == OP_STUR){
-        *src2 = bitfield_u32(insnbits, 0, 5); 
+
+    //format has none
+    if(op == OP_B || op == OP_B_COND || op == OP_NOP || op == OP_HLT){
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
+        *dst = XZR_NUM;
     }
 
-    else{
-        *src2 = bitfield_u32(insnbits, 16, 5); 
-    }
-
-    if(op == OP_BL){
-        *dst = 30; 
-    }
-
-    else{
+    //format has only dst
+    if( (op = OP_MOVK) || op == OP_MOVZ || op == OP_ADRP){
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5); 
     }
+
+    //format has only src1
+    if(op == OP_RET){
+        *src1 = bitfield_u32(insnbits, 0, 5); 
+        *src2 = XZR_NUM;
+        *dst = XZR_NUM;
+    }
+
+    //format has all three values 
+    if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_ADDS_RR || op == OP_MVN
+        || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR){
+            *src1 = bitfield_u32(insnbits, 5, 5); 
+            *src2 = bitfield_u32(insnbits, 15, 5); 
+            *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    //format has only src1 and src2
+    // if(op == OP_ADD_RI || op == OP_SUB_RI || op = OP_LSL || op == OP_LSR){
+
+    // }
+
+    //format has src1 and src2
+    if(op == OP_LDUR || op == OP_STUR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = bitfield_u32(insnbits, 0, 5);
+        *dst = XZR_NUM; 
+    }
+
+
+    //new iteration assuming src2 is RT
+    // *src1 = bitfield_u32(insnbits, 5, 5); 
+
+
+    // //src2 depends if it's 
+    // if(op == OP_STUR){
+    //     *src2 = bitfield_u32(insnbits, 0, 5); 
+    //     *dst = bitfield_u32(insnbits, 0, 5); 
+    // }
+
+    // else{
+    //     //*src2 = bitfield_u32(insnbits, 16, 5); 
+    //     *src2 = XZR_NUM;  
+    // }
+
+    // if(op == OP_BL){
+    //     *dst = 30; 
+    // }
+
+    // if(op != OP_BL|| op != OP_STUR){
+    //     *dst = bitfield_u32(insnbits, 0, 5); 
+    // }
     
     
     //dst, val-w, and w-enable come from writeback
@@ -241,12 +286,15 @@ extract_regs(uint32_t insnbits, opcode_t op,
  */
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-    d_ctl_sigs_t *D_signal; 
+    d_ctl_sigs_t *D_signal = 0; 
+    uint8_t *src1 = 0; 
+    uint8_t *src2 = 0; 
+    uint8_t *dst = 0; 
     generate_DXMW_control(D_in -> op, D_signal, &(X_in -> X_sigs), &(X_in -> M_sigs), &(X_in -> W_sigs));
-    regfile(X_in -> dst, W_wval, X_in -> val_a, X_in -> val_b);
-    extract_immval(D_in -> insnbits, D_in -> op, X_in -> val_imm); 
-    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5),); 
-    decide_alu_op(D_in -> op, X_in -> ALU_op);
+    extract_immval(D_in -> insnbits, D_in -> op, &(X_in -> val_imm)); 
+    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), src1, src2, dst); 
+    decide_alu_op(D_in -> op, &(X_in -> ALU_op));
+    regfile(*src1, *src2, W_out -> dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
     return;
 }
 
