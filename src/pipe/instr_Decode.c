@@ -73,11 +73,6 @@ generate_DXMW_control(opcode_t op,
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
-
-
-
-
-    //you generate one ctrl sig used to select src2
     return;
 }
 
@@ -107,7 +102,7 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
 
     //in the case that the format is in I1
     if(bitfield_u32(insnbits, 23, 1) == 0x01){
-        *imm = bitfield_s64(insnbits, 5, 19); 
+        *imm = bitfield_s64(insnbits, 5, 19);   
     }
     return;
 }
@@ -127,7 +122,9 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //for MOVK and MOVZ, you're going to do a shift and merge
     if(op == OP_MOVK || op == OP_MOVZ){
-        
+        X_in -> val_hw = bitfield_u32(D_in -> insnbits, 21, 2); 
+        //*ALU_op = ;
+
     }
 
     //for ADDS, SUBS, ANDS, TST, and CMP (do wtv operation + modify NZCV)
@@ -241,12 +238,15 @@ extract_regs(uint32_t insnbits, opcode_t op,
  */
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-    d_ctl_sigs_t *D_signal; 
+    d_ctl_sigs_t *D_signal = 0; 
+    uint8_t *src1 = 0; 
+    uint8_t *src2 = 0; 
+    uint8_t *dst = 0; 
     generate_DXMW_control(D_in -> op, D_signal, &(X_in -> X_sigs), &(X_in -> M_sigs), &(X_in -> W_sigs));
-    regfile(X_in -> dst, W_wval, X_in -> val_a, X_in -> val_b);
-    extract_immval(D_in -> insnbits, D_in -> op, X_in -> val_imm); 
-    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5),); 
-    decide_alu_op(D_in -> op, X_in -> ALU_op);
+    extract_immval(D_in -> insnbits, D_in -> op, &(X_in -> val_imm)); 
+    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), src1, src2, dst); 
+    decide_alu_op(D_in -> op, &(X_in -> ALU_op));
+    regfile(*src1, *src2, *dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
     return;
 }
 
