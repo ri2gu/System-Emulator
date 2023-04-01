@@ -45,8 +45,8 @@ generate_DXMW_control(opcode_t op,
     //update the boolean fields for this 
 
     //you generate one ctrl sig used to select src2
-    d_ctl_sigs_t D_sigs; 
-    //if it's a memory store instruction, chaneg the value to a 1
+    // d_ctl_sigs_t D_sig; 
+    //if it's a memory store instruction, change the value to a 1
     //create local var to see if it errs out
     if(op == OP_STUR){
         D_sigs -> src2_sel = 1; 
