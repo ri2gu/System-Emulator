@@ -42,11 +42,7 @@ generate_DXMW_control(opcode_t op,
     //reg temp, allowing next stage of pipeline to operate on the signal w/o interfering
     //with the previous stage
 
-    //update the boolean fields for this 
-
-    //you generate one ctrl sig used to select src2
-    d_ctl_sigs_t D_sigs; 
-    //if it's a memory store instruction, chaneg the value to a 1
+    //if it's a memory store instruction, change the value to a 1
     //create local var to see if it errs out
     if(op == OP_STUR){
         D_sigs -> src2_sel = 1; 
@@ -131,7 +127,7 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //for MOVK and MOVZ, you're going to do a shift and merge
     if(op == OP_MOVK || op == OP_MOVZ){
-
+        
     }
 
     //for ADDS, SUBS, ANDS, TST, and CMP (do wtv operation + modify NZCV)
@@ -142,19 +138,36 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     if(op == OP_SUBS_RR){
         *ALU_op = MINUS_OP; 
-
     }
+
+    if(op == OP_ANDS_RR){
+        *ALU_op = AND_OP; 
+    }
+
+    if(op == OP_TST_RR){
+        *ALU_op = AND_OP;
+        //also update the condition flags 
+    }
+
+    if(op == OP_CMP_RR){
+        *ALU_op = MINUS_OP; 
+        //also update the condition flags 
+    }
+
+
+
     //Other computations just do their respective instructions
     //B, BL, B.cond (addition to determine branch_target)
     if(op == OP_B || op == OP_B_COND){
         *ALU_op = PLUS_OP; 
     }
 
-    // if(op == OP_BL){
-    //     va
-    //     *ALU_op = PASS_A_OP; 
-    // }
-    //B.cond (deetermine truth value of cond based on NZCV)
+    if(op == OP_BL){
+        X_in -> val_a = X_in -> seq_succ_PC; 
+        *ALU_op = PASS_A_OP; 
+
+    }
+    //B.cond (determine truth value of cond based on NZCV)
     //pass val_a, pass_val b (-13:20, 3/23)
     //NZCV resides within the ALU
 
@@ -188,17 +201,28 @@ comb_logic_t
 extract_regs(uint32_t insnbits, opcode_t op, 
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
     //src1 always comes from this location iword[9:5]
+    *src1 = bitfield_u32(insnbits, 5, 5); 
 
-    //How to access src2_sel from here?
-    *src1 = bitfield_u32(insnbits, 5, 4); 
+    //src2 depends if it's 
+    if(op == OP_STUR){
+        *src2 = bitfield_u32(insnbits, 0, 5); 
+    }
 
-    //how to 
+    else{
+        *src2 = bitfield_u32(insnbits, 16, 5); 
+    }
+
+    if(op == OP_BL){
+        *dst = 30; 
+    }
+
+    else{
+        *dst = bitfield_u32(insnbits, 0, 5); 
+    }
     
     
     //dst, val-w, and w-enable come from writeback
     return;
-
-    //make temp variable? extract registers 
 }
 
 /*
@@ -217,13 +241,16 @@ extract_regs(uint32_t insnbits, opcode_t op,
  */
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-    generate_DXMW_control();
-    regfile()
-    extract_immval()
-    decide_alu_op()
+    d_ctl_sigs_t *D_signal; 
+    generate_DXMW_control(D_in -> op, D_signal, &(X_in -> X_sigs), &(X_in -> M_sigs), &(X_in -> W_sigs));
+    regfile(X_in -> dst, W_wval, X_in -> val_a, X_in -> val_b);
+    extract_immval(D_in -> insnbits, D_in -> op, X_in -> val_imm); 
+    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5),); 
+    decide_alu_op(D_in -> op, X_in -> ALU_op);
     return;
 }
 
 
 //check writeback sigs w_val select
 //its supposed to run 11 in the first cycle 
+//you don't have to specifically set it in extract regs, just do it in decode after you call extract_regs
