@@ -156,7 +156,7 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
 
 comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     bool imem_err = 0;
-    uint64_t current_PC;
+    uint64_t current_PC = 0;
     uint64_t pred_PC = current_PC + 4;
     // uint64_t predi_PC = predict_PC(current_PC, D_in -> insnbits, D_in -> op, &predicted_PC, X_out -> seq_succ_PC);
 // select_PC(uint64_t pred_PC,                                     // The predicted PC
