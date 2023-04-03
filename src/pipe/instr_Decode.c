@@ -129,7 +129,7 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //for ADDS, SUBS, ANDS, TST, and CMP (do wtv operation + modify NZCV)
     //how does the instruction aliases affect this? 
-    if(op == OP_ADDS_RR){
+    if(op == OP_ADDS_RR || op == OP_ADD_RI){
         *ALU_op = PLUS_OP; 
     }
 
@@ -287,18 +287,17 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     d_ctl_sigs_t *D_signal = 0; 
-    uint8_t *src1 = 0; 
-    uint8_t *src2 = 0; 
-    uint8_t *dst = 0; 
+    uint8_t src1; 
+    uint8_t src2; 
+    uint8_t dst; 
     generate_DXMW_control(D_in -> op, D_signal, &(X_in -> X_sigs), &(X_in -> M_sigs), &(X_in -> W_sigs));
     extract_immval(D_in -> insnbits, D_in -> op, &(X_in -> val_imm)); 
-    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), src1, src2, dst); 
+    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), &src1, &src2, &dst); 
     decide_alu_op(D_in -> op, &(X_in -> ALU_op));
-    regfile(*src1, *src2, W_out -> dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
+    regfile(src1, src2, W_out -> dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
     return;
 }
 
 
 //check writeback sigs w_val select
 //its supposed to run 11 in the first cycle 
-//you don't have to specifically set it in extract regs, just do it in decode after you call extract_regs

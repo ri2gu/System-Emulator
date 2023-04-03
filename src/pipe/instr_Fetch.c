@@ -63,7 +63,7 @@ select_PC(uint64_t pred_PC,                                     // The predicted
     //send to seq successor if false but predicted true 
     if(M_opcode == OP_B_COND && M_cond_val == false){
         *current_PC = seq_succ; //in the case that we're not taking the branch 
-        seq_succ = current_PC + 8; 
+        seq_succ = *current_PC + 8; 
     }
 }
 
@@ -112,14 +112,18 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
 
 static
 void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
-    //can you add parameters? 
-    
-    //extract the opcode and index into the table  
-    //check if it's an aliased instruction (LSL & LSR are the same opcode)
-    if(init_itable_entry(bitfield_u32(insnbits, 21, 11)) == OP_UBFM){
-        //use the values from that point in 
-        //in order to differentiate between the two with the same opcode 
-        if(init_itable_entry(bitfield_u32(insnbits, 11, 1)) == 0x1){
+    // extract 11 bits used to determine the op code
+    uint32_t top11bits = bitfield_u32(insnbits, 21, 11);
+
+    // Just to clarify, would out->print_op get the original operator and 
+    // out->op get the modified/alias instruction?
+    // no its the other way around
+
+    // check if it's an aliased instruction (LSL & LSR share the same opcode)
+    if ((*op == OP_UBFM)) {
+        //use the values from that point in order to differentiate between the two with the same opcode 
+        uint32_t diff = bitfield_u32(insnbits, 11, 1);
+        if (diff == 0x1) {
             *op = OP_LSR;
         }
         else{
@@ -127,11 +131,11 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
         }
     }
 
-    if(init_itable_entry(bitfield_u32(insnbits, 21, 11) == OP_SUBS_RR)){
+    if(top11bits == OP_SUBS_RR){
         *op = OP_CMP_RR; 
     }
 
-    if(init_itable_entry(bitfield_u32(insnbits, 21, 11) == OP_ANDS_RR)){
+    if(top11bits == OP_ANDS_RR){
         *op = OP_TST_RR; 
     }
 }
@@ -152,19 +156,25 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
 
 comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     bool imem_err = 0;
-    uint64_t current_PC;
-    select_PC(X_in-> val_a, &current_PC);
+    uint64_t current_PC = 0;
+    uint64_t pred_PC = current_PC + 4;
+    // uint64_t predi_PC = predict_PC(current_PC, D_in -> insnbits, D_in -> op, &predicted_PC, X_out -> seq_succ_PC);
+// select_PC(uint64_t pred_PC,                                     // The predicted PC
+//           opcode_t D_opcode, uint64_t val_a,                    // Possible correction from RET
+//           opcode_t M_opcode, bool M_cond_val, uint64_t seq_succ,// Possible correction from B.cond
+//           uint64_t *current_PC)
+
+// You find the current_PC in the select_PC function. The parameter seq_succ in select_pc does not have anything to do with the currrent
+//  cycles' seq_succ, but instead comes from B.cond in the Memory stage, as explained in the comments.
+// select_PC(pred_PC, D_opcode, val_a, M_opcode, M_cond_val, seq_succ, *current_PC)
+    select_PC(pred_PC, D_out -> op, X_in -> val_a, X_out -> op, M_out -> cond_holds, X_out -> seq_succ_PC, &current_PC);
+    // what about instead of predict_PC, pred_PC from struct f_instr_impl
+    // I messed that up, you use X_in for the D_op and D_vala
+
     /* 
      * Students: This case is for generating HLT instructions
      * to stop the pipeline. Only write your code in the **else** case. 
      */
-
-    //with the instruction word, stick it into the output pipeline register for decode
-    imem(current_PC, &out -> insnbits , &imem_err);
-
-
-    //extract the opcode
-
     
     if (!current_PC) {
         out->insnbits = 0xD4400000U;
@@ -173,10 +183,11 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         imem_err = false;
     }
     else { //where you actually put the code 
-        //find the instruction bits 
-        //fix_instr_aliases(insnbits, op)
-        
-        
+        //with the instruction word, stick it into the output pipeline register for decode
+        imem(current_PC, &out -> insnbits , &imem_err); // insnbits passed to decode, finds instruction bits  
+        uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
+        fix_instr_aliases(out->insnbits, &itable[top11]);
+        predict_PC(current_PC, D_in->insnbits, D_in->op, &pred_PC, &(X_out->seq_succ_PC));        
     }
     if (out->op == OP_HLT) {
         in->status = STAT_HLT;
