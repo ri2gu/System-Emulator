@@ -54,7 +54,7 @@ generate_DXMW_control(opcode_t op,
         X_sigs -> valb_sel = 1; 
     }
 
-    if(op == OP_ADDS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_TST_RR){
+    if(op == OP_ADDS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_TST_RR ){
         X_sigs -> set_CC = 1; 
     }
 
@@ -67,9 +67,10 @@ generate_DXMW_control(opcode_t op,
         W_sigs -> dst_sel = 1; 
     }
 
-    if(op != OP_STUR || op != OP_B || op != OP_B_COND || op != OP_RET || op != OP_NOP || op != OP_HLT || op != OP_CMP_RR || op != OP_TST_RR){
+    if(op != OP_STUR && op != OP_B && op != OP_B_COND && op != OP_RET && op != OP_NOP && op != OP_HLT && op != OP_CMP_RR && op != OP_TST_RR){
         W_sigs -> w_enable = 1; 
     } 
+    
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
@@ -164,6 +165,10 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         *ALU_op = PASS_A_OP; 
 
     }
+
+    if(op == OP_NOP){
+        *ALU_op = PASS_A_OP; 
+    }
     //B.cond (determine truth value of cond based on NZCV)
     //pass val_a, pass_val b (-13:20, 3/23)
     //NZCV resides within the ALU
@@ -202,16 +207,16 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     //format has none
     if(op == OP_B || op == OP_B_COND || op == OP_NOP || op == OP_HLT){
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM;
-        *dst = XZR_NUM;
+        *dst = bitfield_u32(insnbits, 0, 5); 
+    }
+
+    if(op == OP_BL){
+        *dst = 30; 
     }
 
     //format has only dst
     if( (op = OP_MOVK) || op == OP_MOVZ || op == OP_ADRP){
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM;
-        *dst = bitfield_u32(insnbits, 0, 5); 
+        *dst = src1; 
     }
 
     //format has only src1
@@ -221,9 +226,13 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *dst = XZR_NUM;
     }
 
+     else if(op >= OP_ADD_RI && op <= OP_ANDS_RR){
+        *src2 = bitfield_u32(insnbits, 16, 5); 
+    }
+
     //format has all three values 
-    if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_ADDS_RR || op == OP_MVN
-        || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_ANDS_RR || op == OP_TST_RR){
+    if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_MVN
+        || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_TST_RR){
             *src1 = bitfield_u32(insnbits, 5, 5); 
             *src2 = bitfield_u32(insnbits, 15, 5); 
             *dst = bitfield_u32(insnbits, 0, 5);
@@ -290,14 +299,20 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     uint8_t src1; 
     uint8_t src2; 
     uint8_t dst; 
-    generate_DXMW_control(D_in -> op, D_signal, &(X_in -> X_sigs), &(X_in -> M_sigs), &(X_in -> W_sigs));
-    extract_immval(D_in -> insnbits, D_in -> op, &(X_in -> val_imm)); 
-    extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), &src1, &src2, &dst); 
-    decide_alu_op(D_in -> op, &(X_in -> ALU_op));
-    regfile(src1, src2, W_out -> dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
+    out -> status = in -> status;
+    out -> seq_succ_PC = in -> seq_succ_PC; 
+    out -> op = in -> op;
+    out -> print_op = in -> print_op; 
+    generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs));
+    out -> print_op = in -> op;  
+    extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
+    extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
+    decide_alu_op(in -> op, &(out-> ALU_op));
+    regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
     return;
 }
 
 
 //check writeback sigs w_val select
 //its supposed to run 11 in the first cycle 
+//one line in decode 
