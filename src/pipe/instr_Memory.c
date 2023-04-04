@@ -34,13 +34,24 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
+    //copy_w_ctl_sigs(&(out -> W_sigs.dst_sel), &()); 
+    //dmem(&(in -> dmem_addr), &(in -> dmem_read), ); 
     in->dst = out->dst; // is this how things 'just carry'?
+    in -> status = out -> status; 
+    in -> op = out -> op; 
+    in -> print_op = out -> print_op;
+    out->W_sigs.w_enable = in->W_sigs.w_enable; 
+
 
     // generated in decode and used in memory 1 if read 0 not
     // dmem_read dmem_write 1 if write 0 not
 
     // seq_succ_pc comes in here and is sent to select_pc
     // what does it mean to buffer m_sigs and w_sigs??
+    if(out -> op == OP_HLT){
+        in->status = STAT_HLT;
+        out->status = STAT_HLT;
+    }
     
     
     

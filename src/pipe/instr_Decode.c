@@ -67,10 +67,13 @@ generate_DXMW_control(opcode_t op,
         W_sigs -> dst_sel = 1; 
     }
 
-    if(op != OP_STUR && op != OP_B && op != OP_B_COND && op != OP_RET && op != OP_NOP && op != OP_HLT && op != OP_CMP_RR && op != OP_TST_RR){
+    if(op != OP_STUR && op != OP_B && op != OP_B_COND && op != OP_RET && op != OP_HLT && op != OP_NOP && op != OP_CMP_RR && op != OP_TST_RR){
         W_sigs -> w_enable = 1; 
     } 
-    
+
+    else{
+        W_sigs -> w_enable = 0; 
+    }
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
@@ -87,23 +90,28 @@ static comb_logic_t
 extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
     //first, figure out the format of the instruction
     //in the case that the format of the instruction is M format 
-    if(bitfield_u32(insnbits, 10, 1) == 0x00){
-        *imm = bitfield_s64(insnbits, 12, 9); //location of the format register 
+    uint32_t code = bitfield_u32(insnbits, 21, 11); 
+    if(op == OP_LDUR || op == OP_STUR){
+        *imm = bitfield_u32(insnbits, 12, 9); //location of the format register 
     }
 
     //in the case that the format of the instruction is in RI format
-    if(bitfield_u32(insnbits, 24, 1) == 0x01){
-        *imm = bitfield_s64(insnbits, 10, 12); 
+    else if(op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR){
+        *imm = bitfield_u32(insnbits, 10, 12); 
     }
 
     //in the case that its in I2 format
-    if(bitfield_u32(insnbits, 24, 4)  == 0x00){
-        *imm = bitfield_s64(insnbits, 5, 16); 
+    else if(op == OP_ADRP){
+        *imm = bitfield_u32(insnbits, 5, 19); 
     }
 
     //in the case that the format is in I1
-    if(bitfield_u32(insnbits, 23, 1) == 0x01){
-        *imm = bitfield_s64(insnbits, 5, 19);   
+    else if(op == OP_MOVK || op == OP_MOVZ){
+        *imm = bitfield_u32(insnbits, 5, 16);   
+    }
+
+    else{
+        *imm = 0; 
     }
     return;
 }
@@ -123,8 +131,9 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //for MOVK and MOVZ, you're going to do a shift and merge
     if(op == OP_MOVK || op == OP_MOVZ){
+        //sets the shift amount
         X_in -> val_hw = bitfield_u32(D_in -> insnbits, 21, 2); 
-        //*ALU_op = ;
+        *ALU_op = MOV_OP;
 
     }
 
@@ -134,7 +143,7 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         *ALU_op = PLUS_OP; 
     }
 
-    if(op == OP_SUBS_RR){
+    if(op == OP_SUBS_RR || op == OP_SUB_RI){
         *ALU_op = MINUS_OP; 
     }
 
@@ -166,7 +175,11 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     }
 
-    if(op == OP_NOP){
+    if(op == OP_RET){
+        *ALU_op = PASS_A_OP; 
+    }
+
+    if(op == OP_NOP || op == OP_HLT){
         *ALU_op = PASS_A_OP; 
     }
     //B.cond (determine truth value of cond based on NZCV)
@@ -206,75 +219,48 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
 
     //format has none
-    if(op == OP_B || op == OP_B_COND || op == OP_NOP || op == OP_HLT){
-        *dst = bitfield_u32(insnbits, 0, 5); 
+    if(op == OP_B_COND || op == OP_HLT){
+        *dst = bitfield_u32(insnbits, 0, 5);
     }
 
-    if(op == OP_BL){
+    //this one is correct 
+    else if(op == OP_BL){
         *dst = 30; 
     }
 
     //format has only dst
-    if( (op = OP_MOVK) || op == OP_MOVZ || op == OP_ADRP){
-        *dst = src1; 
+    else if(op == OP_MOVK || op == OP_MOVZ){
+        *dst = *dst + (X_in -> val_hw); 
     }
 
-    //format has only src1
-    if(op == OP_RET){
-        *src1 = bitfield_u32(insnbits, 0, 5); 
-        *src2 = XZR_NUM;
-        *dst = XZR_NUM;
+    //fixed this one I think? 
+    else if(op == OP_B){
+        //*src1 = bitfield_u32(insnbits, 0, 5); 
+        *src2 = bitfield_u32(insnbits, 5, 5);
+        *dst = bitfield_u32(insnbits, 0, 5 ); 
     }
 
-     else if(op >= OP_ADD_RI && op <= OP_ANDS_RR){
-        *src2 = bitfield_u32(insnbits, 16, 5); 
+    //this one is correct (changed dst from XZR num to 0)
+    else if(op >= OP_ADD_RI && op <= OP_ANDS_RR){
+        *src2 = bitfield_u32(insnbits, 5, 5); 
+        *dst = bitfield_u32(insnbits, 0, 5); ; 
     }
 
     //format has all three values 
-    if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_MVN
+    else if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_MVN
         || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_TST_RR){
             *src1 = bitfield_u32(insnbits, 5, 5); 
             *src2 = bitfield_u32(insnbits, 15, 5); 
             *dst = bitfield_u32(insnbits, 0, 5);
     }
 
-    //format has only src1 and src2
-    // if(op == OP_ADD_RI || op == OP_SUB_RI || op = OP_LSL || op == OP_LSR){
-
-    // }
-
     //format has src1 and src2
-    if(op == OP_LDUR || op == OP_STUR){
+    else if(op == OP_LDUR || op == OP_STUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = bitfield_u32(insnbits, 0, 5);
         *dst = XZR_NUM; 
     }
 
-
-    //new iteration assuming src2 is RT
-    // *src1 = bitfield_u32(insnbits, 5, 5); 
-
-
-    // //src2 depends if it's 
-    // if(op == OP_STUR){
-    //     *src2 = bitfield_u32(insnbits, 0, 5); 
-    //     *dst = bitfield_u32(insnbits, 0, 5); 
-    // }
-
-    // else{
-    //     //*src2 = bitfield_u32(insnbits, 16, 5); 
-    //     *src2 = XZR_NUM;  
-    // }
-
-    // if(op == OP_BL){
-    //     *dst = 30; 
-    // }
-
-    // if(op != OP_BL|| op != OP_STUR){
-    //     *dst = bitfield_u32(insnbits, 0, 5); 
-    // }
-    
-    
     //dst, val-w, and w-enable come from writeback
     return;
 }
@@ -304,7 +290,6 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     out -> op = in -> op;
     out -> print_op = in -> print_op; 
     generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs));
-    out -> print_op = in -> op;  
     extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
@@ -316,3 +301,5 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 //check writeback sigs w_val select
 //its supposed to run 11 in the first cycle 
 //one line in decode 
+
+//we're getting X126, when it should be x0
