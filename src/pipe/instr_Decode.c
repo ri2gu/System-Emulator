@@ -44,36 +44,24 @@ generate_DXMW_control(opcode_t op,
 
     //if it's a memory store instruction, change the value to a 1
     //create local var to see if it errs out
-    if(op == OP_STUR){
-        D_sigs -> src2_sel = 1; 
-        M_sigs -> dmem_write = 1; 
-    }
+    D_sigs->src2_sel = (op == OP_STUR) ? 1 : 0;
+    M_sigs->dmem_write = (op == OP_STUR) ? 1 : 0;
 
     //if it's a register operation
-    if(op == OP_TST_RR || op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_SUBS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_ADDS_RR){
-        X_sigs -> valb_sel = 1; 
-    }
+    X_sigs->valb_sel = (op == OP_TST_RR || op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_SUBS_RR 
+        || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_ADDS_RR) ? 1 : 0;
 
-    if(op == OP_ADDS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_TST_RR ){
-        X_sigs -> set_CC = 1; 
-    }
+    //setting setCC based off slides 
+    X_sigs->set_CC = (op == OP_ADDS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_TST_RR) ? 1 : 0;
 
-    if(op == OP_LDUR){
-        M_sigs -> dmem_read = 1; 
-        W_sigs -> wval_sel = 1; 
-    }
+    W_sigs->wval_sel = (op == OP_LDUR) ? 1 : 0;
+    W_sigs->wval_sel = (op == OP_LDUR) ? 1 : 0;                                                                           
 
-    if(op == OP_BL){
-        W_sigs -> dst_sel = 1; 
-    }
+    //operations and shifts opocodes
+    W_sigs->w_enable = (op == OP_UBFM || op == OP_ADRP || op == OP_ANDS_RR || op == OP_MVN || op == OP_EOR_RR || op == OP_MOVZ || 
+    op == OP_MOVK || op == OP_SUB_RI || op == OP_ADD_RI || op == OP_LSL || op == OP_LSR || op == OP_ASR || op == OP_ADDS_RR || 
+    op == OP_SUBS_RR || op == OP_ORR_RR || op == OP_LDUR) ? 1 : 0;
 
-    if(op != OP_STUR && op != OP_B && op != OP_B_COND && op != OP_RET && op != OP_HLT && op != OP_NOP && op != OP_CMP_RR && op != OP_TST_RR){
-        W_sigs -> w_enable = 1; 
-    } 
-
-    else{
-        W_sigs -> w_enable = 0; 
-    }
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
@@ -90,24 +78,40 @@ static comb_logic_t
 extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
     //first, figure out the format of the instruction
     //in the case that the format of the instruction is M format 
-    uint32_t code = bitfield_u32(insnbits, 21, 11); 
+    //uint32_t code = bitfield_u32(insnbits, 21, 11); 
     if(op == OP_LDUR || op == OP_STUR){
         *imm = bitfield_u32(insnbits, 12, 9); //location of the format register 
+        return; 
     }
 
     //in the case that the format of the instruction is in RI format
-    else if(op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR){
+    else if(op == OP_ADD_RI || op == OP_SUB_RI || op == OP_ASR || op == OP_UBFM){
         *imm = bitfield_u32(insnbits, 10, 12); 
+        return;
     }
 
-    //in the case that its in I2 format
+    //in the case that its in I2 format (has shifting bits too)
     else if(op == OP_ADRP){
-        *imm = bitfield_u32(insnbits, 5, 19); 
+        *imm = ((bitfield_u32(insnbits, 29, 2)) << 12 | (bitfield_u32(insnbits, 5, 19) << 14));
+        return; 
     }
 
     //in the case that the format is in I1
     else if(op == OP_MOVK || op == OP_MOVZ){
         *imm = bitfield_u32(insnbits, 5, 16);   
+        return; 
+    }
+
+    //entrire thing is imm?
+    else if (op == OP_BL || op == OP_B){
+        *imm = bitfield_u32(insnbits, 0, 26); 
+        return; 
+    }
+
+    //asr depends on bits idk
+    else if(op == OP_LSR || op == OP_LSL || op == OP_ASR){
+        *imm = bitfield_u32(insnbits, 16, 5); 
+        return; 
     }
 
     else{
@@ -132,7 +136,7 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
     //for MOVK and MOVZ, you're going to do a shift and merge
     if(op == OP_MOVK || op == OP_MOVZ){
         //sets the shift amount
-        X_in -> val_hw = bitfield_u32(D_in -> insnbits, 21, 2); 
+        //X_in -> val_hw = bitfield_u32(D_in -> insnbits, 21, 2); 
         *ALU_op = MOV_OP;
 
     }
@@ -143,25 +147,18 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         *ALU_op = PLUS_OP; 
     }
 
-    if(op == OP_SUBS_RR || op == OP_SUB_RI){
+    if(op == OP_SUBS_RR || op == OP_SUB_RI || op == OP_CMP_RR){
         *ALU_op = MINUS_OP; 
     }
 
-    if(op == OP_ANDS_RR){
+    if(op == OP_MVN){
+        *ALU_op = NEG_OP; 
+    }
+
+
+    if(op == OP_ANDS_RR || op == OP_TST_RR){
         *ALU_op = AND_OP; 
     }
-
-    if(op == OP_TST_RR){
-        *ALU_op = AND_OP;
-        //also update the condition flags 
-    }
-
-    if(op == OP_CMP_RR){
-        *ALU_op = MINUS_OP; 
-        //also update the condition flags 
-    }
-
-
 
     //Other computations just do their respective instructions
     //B, BL, B.cond (addition to determine branch_target)
@@ -182,6 +179,26 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
     if(op == OP_NOP || op == OP_HLT){
         *ALU_op = PASS_A_OP; 
     }
+     
+    if(op == OP_ORR_RR){
+        *ALU_op = OR_OP; 
+     }
+
+     if(op == OP_EOR_RR){
+        *ALU_op = EOR_OP; 
+     }
+
+     if(op == OP_LSL){
+        *ALU_op = LSL_OP; 
+     }
+
+     if(op == OP_LSR){
+        *ALU_op = LSR_OP; 
+     }
+
+    if(op == OP_ASR){
+        *ALU_op = ASR_OP; 
+     }
     //B.cond (determine truth value of cond based on NZCV)
     //pass val_a, pass_val b (-13:20, 3/23)
     //NZCV resides within the ALU
@@ -219,7 +236,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
 
     //format has none
-    if(op == OP_B_COND || op == OP_HLT){
+    if(op == OP_B_COND){
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -229,8 +246,17 @@ extract_regs(uint32_t insnbits, opcode_t op,
     }
 
     //format has only dst
-    else if(op == OP_MOVK || op == OP_MOVZ){
-        *dst = *dst + (X_in -> val_hw); 
+    else if(op == OP_ADRP || op == OP_MOVZ){
+        //*dst = *dst + (X_in -> val_hw); 
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM; 
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    else if(op == OP_MOVK){
+        *src1 = bitfield_u32(insnbits, 0, 5);
+        *src2 = XZR_NUM; 
+        *dst = bitfield_u32(insnbits, 0, 5);
     }
 
     //fixed this one I think? 
@@ -258,8 +284,32 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if(op == OP_LDUR || op == OP_STUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = bitfield_u32(insnbits, 0, 5);
+        *dst = bitfield_u32(insnbits, 0, 5); 
+    }
+
+    else if (op == OP_NOP){
+        *src1 = XZR_NUM; 
+        *src2 = XZR_NUM; 
+        //*dst = 0; 
+    }
+
+    else if(op == OP_RET){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = XZR_NUM; 
         *dst = XZR_NUM; 
     }
+
+    else {
+        *src1 = XZR_NUM; 
+        *src2 = XZR_NUM;
+    }
+
+    //in this case, nothing is set
+    // else{
+    //     *src1 = XZR_NUM; 
+    //     *src2 = XZR_NUM; 
+    //     *dst = XZR_NUM; 
+    // }
 
     //dst, val-w, and w-enable come from writeback
     return;
@@ -281,19 +331,41 @@ extract_regs(uint32_t insnbits, opcode_t op,
  */
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
-    d_ctl_sigs_t *D_signal = 0; 
+    d_ctl_sigs_t D_signal; 
     uint8_t src1; 
     uint8_t src2; 
-    uint8_t dst; 
+    //uint8_t dst; 
     out -> status = in -> status;
     out -> seq_succ_PC = in -> seq_succ_PC; 
     out -> op = in -> op;
     out -> print_op = in -> print_op; 
-    generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs));
-    extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
+
+    generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs)); 
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
     regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
+    extract_immval(in -> insnbits, in -> op, &(out -> val_imm));
+
+    //special cases depending on opcodes 
+    //setting cond value here 
+    if(in -> op == OP_B_COND){
+        out -> cond = (cond_t)bitfield_u32(in -> insnbits, 0, 4); 
+    }
+
+    //setting val_hw for mov vals
+    out->val_hw = (in->op == OP_MOVZ || in->op == OP_MOVK) ? bitfield_u32(in->insnbits, 21, 2) << 4 : 0;
+
+    //set it equal to current_PC essentially?
+    if(in -> op == OP_ADRP){
+        out -> val_a = in -> this_PC; 
+    }
+
+    //error handling 
+    if(out -> op == OP_ERROR){
+        out -> op = OP_NOP;
+        out -> status = STAT_INS; 
+    }
+
     return;
 }
 
@@ -302,4 +374,4 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 //its supposed to run 11 in the first cycle 
 //one line in decode 
 
-//we're getting X126, when it should be x0
+//failing in add: it's null instead of HLT, statuses are wrong

@@ -34,26 +34,44 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
-    //copy_w_ctl_sigs(&(out -> W_sigs.dst_sel), &()); 
+    copy_w_ctl_sigs(&(out -> W_sigs), &(in -> W_sigs)); 
     //dmem(&(in -> dmem_addr), &(in -> dmem_read), ); 
-    in->dst = out->dst; // is this how things 'just carry'?
-    in -> status = out -> status; 
-    in -> op = out -> op; 
-    in -> print_op = out -> print_op;
-    out->W_sigs.w_enable = in->W_sigs.w_enable; 
+    out->dst = in->dst; // is this how things 'just carry'?
+    //out -> status = in -> status; 
+    out -> op = in -> op; 
+    out -> print_op = in -> print_op;
+    //out->W_sigs.w_enable = in->W_sigs.w_enable; 
+    bool dmem_error; 
 
 
     // generated in decode and used in memory 1 if read 0 not
-    // dmem_read dmem_write 1 if write 0 not
+    // dmem_read dmem_write 1 if write 0 not (if read or write)
+    if(in -> M_sigs.dmem_read ||in -> M_sigs.dmem_write){
+        dmem(in -> val_ex, in -> val_b, (in -> M_sigs).dmem_read, 
+            (in -> M_sigs).dmem_write, &(out -> val_mem), &dmem_error); 
+    }
+
+    //updating values to regs 
+    out -> val_ex = in -> val_ex;
+    out -> val_b = in -> val_b; 
 
     // seq_succ_pc comes in here and is sent to select_pc
     // what does it mean to buffer m_sigs and w_sigs??
-    if(out -> op == OP_HLT){
-        in->status = STAT_HLT;
-        out->status = STAT_HLT;
+    // if(out -> op == OP_HLT){
+    //     in->status = STAT_HLT;
+    //     out->status = STAT_HLT;
+    // }
+
+    //this is where you handle the stat adr error
+    if(dmem_error == true){
+        if(in -> M_sigs.dmem_read ||in -> M_sigs.dmem_write){
+            out -> status = STAT_ADR; 
+            
+            return; 
+        }
+
     }
     
-    
-    
+    out -> status = in -> status; 
     return;
 }
