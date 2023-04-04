@@ -151,8 +151,6 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
         //also update the condition flags 
     }
 
-
-
     //Other computations just do their respective instructions
     //B, BL, B.cond (addition to determine branch_target)
     if(op == OP_B || op == OP_B_COND){
@@ -198,7 +196,7 @@ comb_logic_t
 extract_regs(uint32_t insnbits, opcode_t op, 
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
     //src1 always comes from this location iword[9:5]
-    *src1 = bitfield_u32(insnbits, 5, 5); 
+    *src1 = bitfield_u32(*src1, 5, 5); 
 
     //src2 depends if it's 
     if(op == OP_STUR){
@@ -243,10 +241,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     uint8_t *src2 = 0; 
     uint8_t *dst = 0; 
     generate_DXMW_control(D_in -> op, D_signal, &(X_in -> X_sigs), &(X_in -> M_sigs), &(X_in -> W_sigs));
-    extract_immval(D_in -> insnbits, D_in -> op, &(X_in -> val_imm)); 
+    extract_immval(in -> insnbits, in -> op, &(X_in -> val_imm)); 
     extract_regs(bitfield_u32(D_in -> insnbits, 0, 5), bitfield_u32(D_in -> insnbits,5, 5), src1, src2, dst); 
     decide_alu_op(D_in -> op, &(X_in -> ALU_op));
-    regfile(*src1, *src2, *dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
+    regfile(*src1, *src2, W_out->dst, W_wval, X_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
     return;
 }
 

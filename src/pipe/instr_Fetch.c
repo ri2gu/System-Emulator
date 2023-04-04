@@ -58,6 +58,7 @@ select_PC(uint64_t pred_PC,                                     // The predicted
     //if ret, change program counter to the val a 
     if(D_opcode == OP_RET){
         *current_PC = val_a; 
+        D_in->status = STAT_HLT;
     }
 
     //send to seq successor if false but predicted true 
@@ -187,7 +188,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         imem(current_PC, &out -> insnbits , &imem_err); // insnbits passed to decode, finds instruction bits  
         uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
         fix_instr_aliases(out->insnbits, &itable[top11]);
-        predict_PC(current_PC, D_in->insnbits, D_in->op, &pred_PC, &(X_out->seq_succ_PC));        
+        predict_PC(current_PC, D_in->insnbits, D_in->op, &(F_PC), &(X_out->seq_succ_PC));        
     }
     if (out->op == OP_HLT) {
         in->status = STAT_HLT;

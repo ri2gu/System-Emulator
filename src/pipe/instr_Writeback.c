@@ -32,7 +32,7 @@ extern int64_t W_wval;
  */
 
 comb_logic_t wback_instr(w_instr_impl_t *in) {
-    dmem_status = in -> status; // ??????? how does this work
+    dmem_status = in->status; // ??????? how does this work
     
     // val_ex is the address and val_b is the thing u need to write in address
     
@@ -55,8 +55,13 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     // this mux leads back to decode and writes val_w into enable
     if (in -> W_sigs.dst_sel == 1) {
         // RA should be PC+4 i think idk if i have to ensure that
-        W_out->dst = in->dst;
+        W_out->dst = 0x30; // or in->dst
     } else {
+        if (D_out->op == OP_ADD_RI) {
+            W_out->dst = in->val_ex;
+            W_wval = in->val_b;
+        }
+
         // dont have a return address yet so
         // but if val_ex is an add then doesnt that become the return address that belongs here?
         // so would val_b go in w_val?
@@ -69,9 +74,8 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     // The idea is that by the time we have gotten to decode_instr, 
     // wback_instr has already finished executing and has set W_out->dst, and the writeback value
     // This means that instead of actually doing the actual writeback to the register file 
-    // in writeback by calling regfile(), you can just set W_wval and W_out->dst. For the decode stage of that same cycle you are guaranteed to have W_wval and W_out->dst set.
-    
-    
+    // in writeback by calling regfile(), you can just set W_wval and W_out->dst. 
+    // For the decode stage of that same cycle you are guaranteed to have W_wval and W_out->dst set.
     // w_enable whether to perform a write: 0 for no, 1 for yes    
 
 

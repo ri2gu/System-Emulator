@@ -34,14 +34,29 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
-    in->dst = out->dst; // is this how things 'just carry'?
+    
+    M_out->cond_holds = in->cond_holds;
+
+    
+    out->dst = in->dst; // is this how things 'just carry'?
 
     // generated in decode and used in memory 1 if read 0 not
     // dmem_read dmem_write 1 if write 0 not
 
     // seq_succ_pc comes in here and is sent to select_pc
     // what does it mean to buffer m_sigs and w_sigs??
+
+    /*
+    In the memory file I am not quite sure where we get the dmem_wval
+    parameter when calling dmem. 
+    It should come from val_b. The only case where you would have something
+    to write back to memory was if the instruction is a STUR. The signal
+    src2_sel in decode indicates that the Rt field of STUR (the value to be
+    written into memory) should go into val_b, so that is what dmem_wval should be
+    */
     
+
+
     
     
     return;
