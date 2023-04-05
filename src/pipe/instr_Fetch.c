@@ -24,7 +24,6 @@ extern uint64_t F_PC;
 
 /*
 Steps
-
 1) Feed current_PC into imem to get the instruction (get insnbits from this)
 2) Stick insbits into the output pipeline register 
 3) Extract the opcode (pull top 11 bits from the lookup table - if get error op, do the right thing for status)
@@ -62,9 +61,13 @@ select_PC(uint64_t pred_PC,                                     // The predicted
     }
 
     //send to seq successor if false but predicted true 
-    if(M_opcode == OP_B_COND && M_cond_val == false){
+    else if(M_opcode == OP_B_COND && M_cond_val == false){
         *current_PC = seq_succ; //in the case that we're not taking the branch 
-        seq_succ = *current_PC + 8; 
+        //seq_succ = *current_PC + 8; 
+    }
+
+    else{
+        *current_PC = pred_PC; 
     }
 }
 
@@ -83,25 +86,29 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
      * at the top of this function. 
      * You may modify below it. 
      */
-
     if (!current_PC) {
         return; // We use this to generate a halt instruction.
     }
+    *seq_succ = current_PC + 4; 
     // Modify starting here.
     //PREDICTION: For returns, you're just gonna say PC + 4
     if(op == OP_RET){
         *predicted_PC = current_PC + 4; 
-        *seq_succ = current_PC + 4; 
+        //*seq_succ = current_PC + 4; 
     }
 
 
     //PREDICTION: For conditional branches, predict that it's taken
-    if(op == OP_B_COND){ //find the offset with the chArm diagram 
+    else if(op == OP_B_COND){ //find the offset with the chArm diagram 
         //gets the immediate value from the instruction encoding 
         uint32_t offset = bitfield_u32(insnbits, 5, 16); 
         *predicted_PC = current_PC + offset;
-        *seq_succ = current_PC + 4; //compute in case of misprediction 
+        //*seq_succ = current_PC + 4; //compute in case of misprediction 
     }
+    else{
+        *predicted_PC = *seq_succ; 
+    }
+
 }
 
 /*
@@ -131,7 +138,7 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
             *op = OP_LSL; 
         }
     }
-
+ 
     if(top11bits == OP_SUBS_RR){
         *op = OP_CMP_RR; 
     }
@@ -156,19 +163,17 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
  */
 
 comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
-    bool imem_err = 0;
-    uint64_t current_PC = 0;
-    uint64_t pred_PC = current_PC + 4;
-    // uint64_t predi_PC = predict_PC(current_PC, D_in -> insnbits, D_in -> op, &predicted_PC, X_out -> seq_succ_PC);
-// select_PC(uint64_t pred_PC,                                     // The predicted PC
-//           opcode_t D_opcode, uint64_t val_a,                    // Possible correction from RET
-//           opcode_t M_opcode, bool M_cond_val, uint64_t seq_succ,// Possible correction from B.cond
-//           uint64_t *current_PC)
+    bool imem_err;
+    uint64_t current_PC; 
+    //uint64_t pred_PC = current_PC + 4;
+
 
 // You find the current_PC in the select_PC function. The parameter seq_succ in select_pc does not have anything to do with the currrent
 //  cycles' seq_succ, but instead comes from B.cond in the Memory stage, as explained in the comments.
 // select_PC(pred_PC, D_opcode, val_a, M_opcode, M_cond_val, seq_succ, *current_PC)
-    select_PC(pred_PC, D_out -> op, X_in -> val_a, X_out -> op, M_out -> cond_holds, X_out -> seq_succ_PC, &current_PC);
+    select_PC(in -> pred_PC, X_in -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
+
+
     // what about instead of predict_PC, pred_PC from struct f_instr_impl
     // I messed that up, you use X_in for the D_op and D_vala
 
@@ -188,17 +193,26 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         imem(current_PC, &out -> insnbits , &imem_err); // insnbits passed to decode, finds instruction bits  
         uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
         fix_instr_aliases(out->insnbits, &itable[top11]);
-        predict_PC(current_PC, D_in->insnbits, D_in->op, &(F_PC), &(X_out->seq_succ_PC));        
+        out -> op = itable[top11]; 
+        out -> print_op =  itable[top11];
+        predict_PC(current_PC, out->insnbits, out -> op, &(F_PC), &(out->seq_succ_PC)); 
+        //printf((char *)D_in q-> op); 
     }
-    if (out->op == OP_HLT) {
+    if (out->op == OP_HLT) { //do it for every status 
         in->status = STAT_HLT;
         out->status = STAT_HLT;
     }
+
+    if(imem_err == true ||out -> op == OP_ERROR){
+        in -> status = STAT_INS; 
+        out -> status = STAT_INS; 
+    }
+    out -> status = in -> status; 
     return;
 }
 
 
 
 
-
+//set a breakpoint in fetch and see how select pc is altering current pc
 //w_enable 0 for no writeback

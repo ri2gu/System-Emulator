@@ -37,22 +37,31 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
-    out->op = in->op; // simply continues on 
+    out -> op = in -> op;
+    out -> print_op = in-> print_op; // simply continues on 
     out->dst = in->dst;
-    out->val_b = in->val_b; 
+    out->val_b = in->val_b;     
+    out -> status = in -> status; 
+    in->seq_succ_PC = out->seq_succ_PC;
+    //out->W_sigs.w_enable = true;
+
 
     // copying m and w signals to the next stage
     // destination, source
     copy_m_ctl_sigs(&(out->M_sigs), &(in->M_sigs));
     copy_w_ctl_sigs(&(out->W_sigs), &(in->W_sigs));
+    alu(&(in -> val_a), &(in -> val_b), &(in -> val_hw), (in -> ALU_op), 
+            &(in -> X_sigs.set_CC), (in -> cond), &(out -> val_ex), &(X_condval)); 
 
     // i think im supposed to first see if set_cc is true or not
     // if it is then check against god knows what in cond_t cond
     // and set that to X_condval which is a bool 
-    X_condval = in->cond;
+    //X_condval = in->cond;
+    //x_ctl_sigs_t *X_signal; 
+    //alu(&(in -> val_a), &(in -> val_b), &(in -> val_hw), &(in -> ALU_op), 
 
     // seq_succ_PC is supposed to be sent back to select_pc
-    in->seq_succ_PC = out->seq_succ_PC;
+    //in->seq_succ_PC = out->seq_succ_PC;
     
     // mux uses valb_sel 0 for immediate 1 for register
     // original val_b continues to memory so i created a temp
@@ -118,8 +127,6 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
             out->val_ex = in->val_a;
             break;
     }
-
-    
     
     return;
 }
