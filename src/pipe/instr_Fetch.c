@@ -66,9 +66,16 @@ select_PC(uint64_t pred_PC,                                     // The predicted
         //seq_succ = *current_PC + 8; 
     }
 
+    //for ret pc takes val A
+    else if(D_opcode == OP_RET){
+        *current_PC = val_a; 
+    }
+
     else{
         *current_PC = pred_PC; 
     }
+
+    return; 
 }
 
 /*
@@ -89,7 +96,7 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
     if (!current_PC) {
         return; // We use this to generate a halt instruction.
     }
-    *seq_succ = current_PC + 4; 
+    //*seq_succ = current_PC + 4; 
     // Modify starting here.
     //PREDICTION: For returns, you're just gonna say PC + 4
     if(op == OP_RET){
@@ -97,18 +104,28 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
         //*seq_succ = current_PC + 4; 
     }
 
+    else if(op == OP_B || op == OP_BL){
+        //immediate is just the whole thing for these two
+        uint64_t imm4 = 4 * bitfield_s64(insnbits, 0, 26); 
+        *predicted_PC = current_PC + imm4; 
+    }
 
     //PREDICTION: For conditional branches, predict that it's taken
-    else if(op == OP_B_COND){ //find the offset with the chArm diagram 
-        //gets the immediate value from the instruction encoding 
-        uint32_t offset = bitfield_u32(insnbits, 5, 16); 
-        *predicted_PC = current_PC + offset;
+    else if (op == OP_B_COND){ //find the offset with the chArm diagram 
+        uint64_t immBits4 = 4 * bitfield_s64(insnbits, 5, 19); 
+        *predicted_PC = current_PC + immBits4; 
         //*seq_succ = current_PC + 4; //compute in case of misprediction 
     }
-    else{
-        *predicted_PC = *seq_succ; 
-    }
 
+    //default is just us moving down on to the next one
+    else{
+        *predicted_PC = current_PC + 4; 
+    }   
+
+    //special case for adrp, change current_PC for alignment purposes
+    *seq_succ = (op == OP_ADRP) ? (current_PC & 0xfffffffffffff000) : (current_PC + 4);
+
+    return; 
 }
 
 /*
@@ -171,7 +188,8 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
 // You find the current_PC in the select_PC function. The parameter seq_succ in select_pc does not have anything to do with the currrent
 //  cycles' seq_succ, but instead comes from B.cond in the Memory stage, as explained in the comments.
 // select_PC(pred_PC, D_opcode, val_a, M_opcode, M_cond_val, seq_succ, *current_PC)
-    select_PC(in -> pred_PC, X_in -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
+    //select_PC(in -> pred_PC, X_in -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
+    select_PC(in -> pred_PC, D_out -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
 
 
     // what about instead of predict_PC, pred_PC from struct f_instr_impl
@@ -191,23 +209,40 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     else { //where you actually put the code 
         //with the instruction word, stick it into the output pipeline register for decode
         imem(current_PC, &out -> insnbits , &imem_err); // insnbits passed to decode, finds instruction bits  
-        uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
-        fix_instr_aliases(out->insnbits, &itable[top11]);
-        out -> op = itable[top11]; 
-        out -> print_op =  itable[top11];
-        predict_PC(current_PC, out->insnbits, out -> op, &(F_PC), &(out->seq_succ_PC)); 
-        //printf((char *)D_in q-> op); 
+        
+        //checking immed after for error
+        if(imem_err == true){
+            out -> op = OP_ERROR;  
+            out -> status = STAT_INS; 
+        }
+
+        else{
+            uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
+            fix_instr_aliases(out->insnbits, &itable[top11]);
+            out -> op = itable[top11]; 
+            out -> print_op = out -> op; 
+            predict_PC(current_PC, out->insnbits, out -> op, &(F_PC), &(out->seq_succ_PC)); 
+
+            //setting current to successor
+            if(out -> op == OP_ADRP){
+                out -> this_PC = out -> seq_succ_PC; 
+            }
+
+            //changing op and status to account for running into an error operation 
+            if(out -> op == OP_ERROR){
+                out -> op = OP_NOP; 
+                out -> status = STAT_INS; 
+            }
+        }
+        //chug status along
+       in -> status = out -> status;  
+
     }
+
     if (out->op == OP_HLT) { //do it for every status 
         in->status = STAT_HLT;
         out->status = STAT_HLT;
     }
-
-    if(imem_err == true ||out -> op == OP_ERROR){
-        in -> status = STAT_INS; 
-        out -> status = STAT_INS; 
-    }
-    out -> status = in -> status; 
     return;
 }
 

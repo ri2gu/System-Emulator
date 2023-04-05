@@ -50,8 +50,13 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     // destination, source
     copy_m_ctl_sigs(&(out->M_sigs), &(in->M_sigs));
     copy_w_ctl_sigs(&(out->W_sigs), &(in->W_sigs));
-    alu(&(in -> val_a), &(in -> val_b), &(in -> val_hw), (in -> ALU_op), 
-            &(in -> X_sigs.set_CC), (in -> cond), &(out -> val_ex), &(X_condval)); 
+    // alu(&(in -> val_a), &(in -> val_b), &(in -> val_hw), (in -> ALU_op), 
+    //         &(in -> X_sigs.set_CC), (in -> cond), &(out -> val_ex), &(X_condval)); 
+
+    //have to throw ins for status if ret but unaligned
+    if(in -> op == OP_RET && in -> val_a % 4 != 0){
+        out -> status = STAT_INS; 
+    }
 
     // i think im supposed to first see if set_cc is true or not
     // if it is then check against god knows what in cond_t cond
@@ -65,68 +70,75 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     
     // mux uses valb_sel 0 for immediate 1 for register
     // original val_b continues to memory so i created a temp
-    uint64_t mux_result;
-    if (in->X_sigs.valb_sel == 0) {
-        mux_result = in->val_imm; 
-    } else {
-        mux_result = in->val_b;
-    }
+    // uint64_t mux_result;
+    // if (in->X_sigs.valb_sel == 0) {
+    //     mux_result = in->val_imm; 
+    // } else {
+    //     mux_result = in->val_b;
+    // }
 
     // use set_cc -- whether to set condition flags: 0 for no, 1 for yes    
     // how do i use cond here
-    // so cond comes into alu then leaves as x_condval
-    switch (in->ALU_op) {
-        case PLUS_OP:
-            out->val_ex = in->val_a + (mux_result << in->val_hw);
-            break; 
-        case MINUS_OP:
-            out->val_ex = in->val_a - (mux_result << in->val_hw);
-            break;
-        case NEG_OP:
-            // ~vala
-            out->val_ex = ~in->val_a;
-            break;
-        case OR_OP:
-            // vala | valb
-            out->val_ex = in->val_a | mux_result;
-            break;
-        case EOR_OP:
-            // vala ^ valb
-            out->val_ex = in->val_a ^ mux_result;
-            break;
-        case AND_OP:
-            // vala & valb
-            out->val_ex = in->val_a & mux_result;
-            break;
-        case MOV_OP:
-            // vala | (valb << valhw)
-            out->val_ex = in->val_a | (mux_result << in->val_hw);
-            break;
-        case LSL_OP:
-            // vala << (valb & 0x3FUL)
-            out->val_ex = in->val_a << (mux_result & 0x3FUL);
-            break;
-        case LSR_OP:
-            // vala >>L (valb & 0x3FUL)
-            // what does the L mean?
-            out->val_ex = in->val_a >> (mux_result & 0x3FUL);
-            break;
-        case ASR_OP:
-            // vala >>A (valb & 0x3FUL)
-            // what does the A mean?
-            out->val_ex = in->val_a >> (mux_result & 0x3FUL);
-            break;
-        case PASS_A_OP: 
-            out->val_ex = in->val_a;
-            break;
-        case PASS_B_OP:
-            out->val_ex = in->val_a;
-            break;
-        case ERROR_OP:
-        default: // when u dont have alu_op its always pass_a_op
-            out->val_ex = in->val_a;
-            break;
-    }
+    // so cond comes into alu then leaves as x_condval!!!!
+    //based on decode, it depends on val_b and val_imm vals
+    alu(in->val_a, (in->X_sigs.valb_sel ? in->val_b : in->val_imm), in->val_hw, 
+        in->ALU_op, in->X_sigs.set_CC, in->cond, &(out->val_ex), &(out->cond_holds));
+
+    //then you actually want to set condval (can finally stop failing those lol)
+    X_condval = out -> cond_holds; 
+
+    // switch (in->ALU_op) {
+    //     case PLUS_OP:
+    //         out->val_ex = in->val_a + (mux_result << in->val_hw);
+    //         break; 
+    //     case MINUS_OP:
+    //         out->val_ex = in->val_a - (mux_result << in->val_hw);
+    //         break;
+    //     case NEG_OP:
+    //         // ~vala
+    //         out->val_ex = ~in->val_a;
+    //         break;
+    //     case OR_OP:
+    //         // vala | valb
+    //         out->val_ex = in->val_a | mux_result;
+    //         break;
+    //     case EOR_OP:
+    //         // vala ^ valb
+    //         out->val_ex = in->val_a ^ mux_result;
+    //         break;
+    //     case AND_OP:
+    //         // vala & valb
+    //         out->val_ex = in->val_a & mux_result;
+    //         break;
+    //     case MOV_OP:
+    //         // vala | (valb << valhw)
+    //         out->val_ex = in->val_a | (mux_result << in->val_hw);
+    //         break;
+    //     case LSL_OP:
+    //         // vala << (valb & 0x3FUL)
+    //         out->val_ex = in->val_a << (mux_result & 0x3FUL);
+    //         break;
+    //     case LSR_OP:
+    //         // vala >>L (valb & 0x3FUL)
+    //         // what does the L mean?
+    //         out->val_ex = in->val_a >> (mux_result & 0x3FUL);
+    //         break;
+    //     case ASR_OP:
+    //         // vala >>A (valb & 0x3FUL)
+    //         // what does the A mean?
+    //         out->val_ex = in->val_a >> (mux_result & 0x3FUL);
+    //         break;
+    //     case PASS_A_OP: 
+    //         out->val_ex = in->val_a;
+    //         break;
+    //     case PASS_B_OP:
+    //         out->val_ex = in->val_a;
+    //         break;
+    //     case ERROR_OP:
+    //     default: // when u dont have alu_op its always pass_a_op
+    //         out->val_ex = in->val_a;
+    //         break;
+    // }
     
     return;
 }

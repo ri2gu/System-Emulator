@@ -32,7 +32,7 @@ extern int64_t W_wval;
  */
 
 comb_logic_t wback_instr(w_instr_impl_t *in) {
-    dmem_status = in -> status; // ??????? how does this work
+    //dmem_status = in -> status; // ??????? how does this work
     //F_in -> status  = in -> op; 
     //= in -> print_op; 
 
@@ -57,19 +57,14 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     // dst selector: 1 for X30 (in BL), 0 otherwise
     // so 0 is we have no return address and 1 is we do
     // this mux leads back to decode and writes val_w into enable
-    if (in -> W_sigs.dst_sel == 1) {
+    //if (in -> W_sigs.dst_sel == 1) {
         // RA should be PC+4 i think idk if i have to ensure that
-        W_out->dst = 0x30; // or in->dst
-    } else {
-        if (D_out->op == OP_ADD_RI) {
-            W_out->dst = in->val_ex;
-            W_wval = in->val_b;
-        }
-
+       // W_out->dst = in->dst;
+    //} else {
         // dont have a return address yet so
         // but if val_ex is an add then doesnt that become the return address that belongs here?
         // so would val_b go in w_val?
-    }
+   //}
 
     // have yet to use:
     // val_b -- what you write to the address
