@@ -71,6 +71,9 @@ select_PC(uint64_t pred_PC,                                     // The predicted
         *current_PC = val_a; 
     }
 
+    else if(M_opcode == OP_ERROR){
+        *current_PC = seq_succ; 
+    }
     else{
         *current_PC = pred_PC; 
     }
@@ -96,7 +99,7 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
     if (!current_PC) {
         return; // We use this to generate a halt instruction.
     }
-    //*seq_succ = current_PC + 4; 
+
     // Modify starting here.
     //PREDICTION: For returns, you're just gonna say PC + 4
     if(op == OP_RET){
@@ -117,10 +120,15 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
         //*seq_succ = current_PC + 4; //compute in case of misprediction 
     }
 
-    //default is just us moving down on to the next one
+    //GIRLLLL u forgot to account for dis one 
+    else if (op == OP_ERROR){
+        *predicted_PC = current_PC; 
+    }   
+
+    ///default is just us moving down on to the next one
     else{
         *predicted_PC = current_PC + 4; 
-    }   
+    }
 
     //special case for adrp, change current_PC for alignment purposes
     *seq_succ = (op == OP_ADRP) ? (current_PC & 0xfffffffffffff000) : (current_PC + 4);
@@ -237,6 +245,11 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         //chug status along
        in -> status = out -> status;  
 
+    }
+
+    //trying to solve program counter issue here?
+    if(F_out -> status == STAT_INS){
+        in -> status = STAT_INS; 
     }
 
     if (out->op == OP_HLT) { //do it for every status 
