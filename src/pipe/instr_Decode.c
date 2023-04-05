@@ -296,7 +296,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if(op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM; 
-        *dst = XZR_NUM; 
+        //*dst = XZR_NUM; 
     }
 
     else {
