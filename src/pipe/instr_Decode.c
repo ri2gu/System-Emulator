@@ -383,19 +383,19 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out -> op = OP_HLT; 
         in -> status = OP_HLT; 
     }
-    if (out->op == OP_HLT) { //do it for every status 
-        in->status = STAT_HLT;
-        out->status = STAT_HLT;
-    }
+    // if (out->op == OP_HLT) { //do it for every status 
+    //     in->status = STAT_HLT;
+    //     out->status = STAT_HLT;
+    // }
 
-    if(in -> op == OP_ERROR && in -> status == STAT_INS){
-        out -> op = OP_HLT;
-        out -> status = OP_HLT; 
-    }
+    // if(in -> op == OP_ERROR && in -> status == STAT_INS){
+    //     out -> op = OP_HLT;
+    //     out -> status = OP_HLT; 
+    // }
 
-    if(out -> op == OP_HLT && in -> status == STAT_INS){
-        in -> op = OP_HLT; 
-    }
+    // if(out -> op == OP_HLT && in -> status == STAT_INS){
+    //     in -> op = OP_HLT; 
+    // }
 
     return;
 }
