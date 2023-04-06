@@ -40,15 +40,17 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     //out -> status = in -> status; 
     out -> op = in -> op; 
     out -> print_op = in -> print_op;
+    out -> val_ex = in -> val_ex;
+    out -> val_b = in -> val_b; 
     //out->W_sigs.w_enable = in->W_sigs.w_enable; 
     bool dmem_error; 
 
 
     // generated in decode and used in memory 1 if read 0 not
     // dmem_read dmem_write 1 if write 0 not (if read or write)
-    if(in -> M_sigs.dmem_read == true ||in -> M_sigs.dmem_write == true){
-        dmem(in -> val_ex, in -> val_b, (in -> M_sigs).dmem_read, 
-            (in -> M_sigs).dmem_write, &(out -> val_mem), &dmem_error); 
+    if(((in -> M_sigs.dmem_read == true ||in -> M_sigs.dmem_write == true)) && out -> status == STAT_AOK){
+        dmem(in -> val_ex, in -> val_b, in -> M_sigs.dmem_read, 
+            in -> M_sigs.dmem_write, &(out -> val_mem), &dmem_error); 
     }
 
         if(dmem_error == true){
@@ -61,9 +63,6 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
 
     }
 
-    //updating values to regs 
-    out -> val_ex = in -> val_ex;
-    out -> val_b = in -> val_b; 
 
     // seq_succ_pc comes in here and is sent to select_pc
     // what does it mean to buffer m_sigs and w_sigs??

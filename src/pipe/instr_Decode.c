@@ -275,6 +275,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_NOP){
         *src1 = XZR_NUM;
         *src2 = XZR_NUM;
+        //*dst = SP_NUM; 
     }
 
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
@@ -307,6 +308,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     }
 
     else if(op == OP_ERROR){
+        *dst = XZR_NUM; 
         *src2 = 0; 
     }
     
@@ -343,7 +345,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
     regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
-    extract_immval(in -> insnbits, in -> op, &(out -> val_imm));
+    extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
 
     forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
             W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_in -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
@@ -368,19 +370,16 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out -> status = STAT_INS; 
     }
 
-    if(out -> op == OP_HLT){
-        out -> op = OP_HLT; 
-        in -> status = OP_HLT; 
+    // if(out -> op == OP_HLT){
+    //     //out -> op = OP_HLT; 
+    //     in -> status = OP_HLT; 
+    //     //out -> status = OP_HLT; 
+    // }
+    if (out->op == OP_HLT) { //do it for every status 
+        in->status = STAT_HLT;
+        out->status = STAT_HLT;
     }
-    // if (out->op == OP_HLT) { //do it for every status 
-    //     in->status = STAT_HLT;
-    //     out->status = STAT_HLT;
-    // }
 
-    // if(in -> op == OP_ERROR && in -> status == STAT_INS){
-    //     out -> op = OP_HLT;
-    //     out -> status = OP_HLT; 
-    // }
 
     // if(out -> op == OP_HLT && in -> status == STAT_INS){
     //     in -> op = OP_HLT; 
