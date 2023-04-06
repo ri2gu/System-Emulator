@@ -62,6 +62,10 @@ generate_DXMW_control(opcode_t op,
     op == OP_MOVK || op == OP_SUB_RI || op == OP_ADD_RI || op == OP_LSL || op == OP_LSR || op == OP_ASR || op == OP_ADDS_RR || 
     op == OP_SUBS_RR || op == OP_ORR_RR || op == OP_LDUR) ? 1 : 0;
 
+    if(op == OP_ERROR){
+        W_sigs -> w_enable = false; 
+    }
+
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
@@ -269,8 +273,9 @@ extract_regs(uint32_t insnbits, opcode_t op,
     //this one is correct (changed dst from XZR num to 0)
     else if(op >= OP_ADD_RI && op <= OP_ANDS_RR){
         *src2 = bitfield_u32(insnbits, 5, 5); 
-        *dst = bitfield_u32(insnbits, 0, 5); ; 
+        *dst = bitfield_u32(insnbits, 0, 5);
     }
+
 
     //format has all three values 
     else if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_MVN
@@ -297,6 +302,11 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM; 
         //*dst = XZR_NUM; 
+    }
+
+    else if(op == OP_LSL || op == OP_LSR){
+        *src1 = bitfield_u32(insnbits, 5, 5); 
+        *dst = bitfield_u32(insnbits, 0, 5); 
     }
 
     else {
@@ -346,10 +356,9 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
     extract_immval(in -> insnbits, in -> op, &(out -> val_imm));
 
-    forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
-            W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_in -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
-            W_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
-    
+    // forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
+    //         W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_in -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
+    //         W_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b)); 
     //special cases depending on opcodes 
     //setting cond value here 
     if(in -> op == OP_B_COND){
@@ -370,8 +379,23 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out -> status = STAT_INS; 
     }
 
-    // if specific error then call forward? 
+    if(out -> op == OP_HLT){
+        out -> op = OP_HLT; 
+        in -> status = OP_HLT; 
+    }
+    if (out->op == OP_HLT) { //do it for every status 
+        in->status = STAT_HLT;
+        out->status = STAT_HLT;
+    }
 
+    if(in -> op == OP_ERROR && in -> status == STAT_INS){
+        out -> op = OP_HLT;
+        out -> status = OP_HLT; 
+    }
+
+    if(out -> op == OP_HLT && in -> status == STAT_INS){
+        in -> op = OP_HLT; 
+    }
 
     return;
 }
