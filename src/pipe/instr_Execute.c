@@ -37,12 +37,12 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
-    out -> op = in -> op;
-    out -> print_op = in-> print_op; // simply continues on 
-    out->dst = in->dst;
-    out->val_b = in->val_b;     
-    out -> status = in -> status; 
-    in->seq_succ_PC = out->seq_succ_PC;
+    // out -> op = in -> op;
+    // out -> print_op = in-> print_op; // simply continues on 
+    // out->dst = in->dst;
+    // out->val_b = in->val_b;     
+    // out -> status = in -> status; 
+    // in->seq_succ_PC = out->seq_succ_PC;
     //out->W_sigs.w_enable = true;
 
 
@@ -54,7 +54,7 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     //         &(in -> X_sigs.set_CC), (in -> cond), &(out -> val_ex), &(X_condval)); 
 
     //have to throw ins for status if ret but unaligned
-    if(in -> op == OP_RET && in -> val_a % 4 != 0){
+    if(in -> op == OP_RET){
         out -> status = STAT_INS; 
     }
 
@@ -139,6 +139,14 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     //         out->val_ex = in->val_a;
     //         break;
     // }
+
+    //update conditions afterwards
+    out->dst = in->dst;
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->seq_succ_PC = in->seq_succ_PC;
+    out->val_b = in->val_b;
+    out->status = in->status;
     
     return;
 }

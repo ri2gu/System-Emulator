@@ -108,16 +108,15 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
         *imm = bitfield_u32(insnbits, 5, 16);   
         return; 
     }
+        //asr depends on bits idk
+    else if(op == OP_LSR || op == OP_LSL || op == OP_ASR){
+        *imm = bitfield_u32(insnbits, 16, 5); 
+        return; 
+    }
 
     //entrire thing is imm?
     else if (op == OP_BL || op == OP_B){
         *imm = bitfield_u32(insnbits, 0, 26); 
-        return; 
-    }
-
-    //asr depends on bits idk
-    else if(op == OP_LSR || op == OP_LSL || op == OP_ASR){
-        *imm = bitfield_u32(insnbits, 16, 5); 
         return; 
     }
 
