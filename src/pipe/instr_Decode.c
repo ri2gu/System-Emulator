@@ -348,7 +348,8 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
     forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
             W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_in -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
-            W_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b)); 
+            W_in -> W_sigs.w_enable, &(X_in -> val_a), &(X_in -> val_b));
+    
     //special cases depending on opcodes 
     //setting cond value here 
     if(in -> op == OP_B_COND){
@@ -369,6 +370,9 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out -> status = STAT_INS; 
     }
 
+    // if specific error then call forward? 
+
+
     return;
 }
 
@@ -376,5 +380,3 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 //check writeback sigs w_val select
 //its supposed to run 11 in the first cycle 
 //one line in decode 
-
-//failing in add: it's null instead of HLT, statuses are wrong

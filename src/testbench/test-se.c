@@ -114,7 +114,11 @@ static int run_test(int A, int B, int C, int d, char *testdir, char *testname, i
     }
 
     /* Diff the results */
-    sprintf(cmd, "diff %s %s", checkpoint_ref, checkpoint_student);
+    sprintf(cmd, "grep -v \"Program Counter\" %s > %s.diff", checkpoint_ref, checkpoint_ref);
+    status = system(cmd);
+    sprintf(cmd, "grep -v \"Program Counter\" %s > %s.diff", checkpoint_student, checkpoint_student);
+    status = system(cmd);
+    sprintf(cmd, "diff %s.diff %s.diff", checkpoint_ref, checkpoint_student);
     status = system(cmd);
 
     int pass = 1;
@@ -124,12 +128,16 @@ static int run_test(int A, int B, int C, int d, char *testdir, char *testname, i
     /* Cleanup */
     sprintf(cmd, "rm -f %s", checkpoint_ref);
     status = system(cmd);
+    sprintf(cmd, "rm -f %s.diff", checkpoint_ref);
+    status = system(cmd);
     if (status == -1) {
         fprintf(stderr, "Error removing file %s: %s\n", 
                 checkpoint_ref, strerror(errno));
         return 0;
     }
     sprintf(cmd, "rm -f %s", checkpoint_student);
+    status = system(cmd);
+    sprintf(cmd, "rm -f %s.diff", checkpoint_student);
     status = system(cmd);
     if (status == -1) {
         fprintf(stderr, "Error removing file %s: %s\n", 

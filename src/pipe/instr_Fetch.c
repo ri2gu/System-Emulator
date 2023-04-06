@@ -57,7 +57,6 @@ select_PC(uint64_t pred_PC,                                     // The predicted
     //if ret, change program counter to the val a 
     if(D_opcode == OP_RET){
         *current_PC = val_a; 
-        D_in->status = STAT_HLT;
     }
 
     //send to seq successor if false but predicted true 
@@ -70,7 +69,6 @@ select_PC(uint64_t pred_PC,                                     // The predicted
     else if(D_opcode == OP_RET){
         *current_PC = val_a; 
     }
-
     else if(M_opcode == OP_ERROR){
         *current_PC = seq_succ; 
     }
@@ -132,6 +130,7 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
 
     //special case for adrp, change current_PC for alignment purposes
     *seq_succ = (op == OP_ADRP) ? (current_PC & 0xfffffffffffff000) : (current_PC + 4);
+
 
     return; 
 }
@@ -240,6 +239,10 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
             if(out -> op == OP_ERROR){
                 out -> op = OP_NOP; 
                 out -> status = STAT_INS; 
+            }
+
+            if (out->status == STAT_INS) {
+                F_out->pred_PC = D_in->seq_succ_PC;
             }
         }
         //chug status along
