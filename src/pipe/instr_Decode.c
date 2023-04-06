@@ -48,13 +48,14 @@ generate_DXMW_control(opcode_t op,
     M_sigs->dmem_write = (op == OP_STUR) ? 1 : 0;
 
     //if it's a register operation
-    X_sigs->valb_sel = (op == OP_TST_RR || op == OP_CMP_RR || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_SUBS_RR 
-        || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_ADDS_RR) ? 1 : 0;
+    X_sigs->valb_sel = (op == OP_B_COND || op == OP_B || op == OP_BL || op == OP_RET || op == OP_MOVK || 
+                op == OP_MOVZ || op == OP_HLT || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_NOP || op == OP_LDUR || 
+                op == OP_STUR || op == OP_ADRP || op == OP_LSR || op == OP_LSL || op == OP_ASR) ? 0 : 1; 
 
     //setting setCC based off slides 
     X_sigs->set_CC = (op == OP_ADDS_RR || op == OP_ANDS_RR || op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_TST_RR) ? 1 : 0;
 
-    W_sigs->wval_sel = (op == OP_LDUR) ? 1 : 0;
+    M_sigs->dmem_read = (op == OP_LDUR) ? 1 : 0;
     W_sigs->wval_sel = (op == OP_LDUR) ? 1 : 0;                                                                           
 
     //operations and shifts opocodes
@@ -66,6 +67,8 @@ generate_DXMW_control(opcode_t op,
         W_sigs -> w_enable = false; 
     }
 
+
+    W_sigs->dst_sel = (op == OP_BL) ? 1 : 0;
 
     //how to update ALUop condition [3:0]
     //how to update cond: iword[3:0]
@@ -241,7 +244,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     if (op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR || op == OP_UBFM || op == OP_ASR){
         // bits 9-5 = source register number
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = XZR_NUM;
+        //*src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -295,7 +298,15 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
-        *dst = XZR_NUM;
+        //*dst = XZR_NUM;
+    }
+
+    else if(op == OP_BL){
+        *dst = 30; 
+    }
+
+    else if(op == OP_ERROR){
+        *src2 = 0; 
     }
     
     //everything else 32 val unused 
