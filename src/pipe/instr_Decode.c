@@ -236,92 +236,75 @@ copy_w_ctl_sigs(w_ctl_sigs_t *dest, w_ctl_sigs_t *src) {
 comb_logic_t
 extract_regs(uint32_t insnbits, opcode_t op, 
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
-    //src1 always comes from this location iword[9:5]
 
-
-    //format has none
-    if(op == OP_B_COND){
+    //grouping together here based on formats 
+    if (op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR || op == OP_UBFM || op == OP_ASR){
+        // bits 9-5 = source register number
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
-    //this one is correct 
-    else if(op == OP_BL){
-        *dst = 30; 
-    }
-
-    //format has only dst
-    else if(op == OP_ADRP || op == OP_MOVZ){
-        //*dst = *dst + (X_in -> val_hw); 
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM; 
-        *dst = bitfield_u32(insnbits, 0, 5);
-    }
-
-    else if(op == OP_MOVK){
-        *src1 = bitfield_u32(insnbits, 0, 5);
-        *src2 = XZR_NUM; 
-        *dst = bitfield_u32(insnbits, 0, 5);
-    }
-
-    //fixed this one I think? 
-    else if(op == OP_B){
-        //*src1 = bitfield_u32(insnbits, 0, 5); 
-        *src2 = bitfield_u32(insnbits, 5, 5);
-        *dst = bitfield_u32(insnbits, 0, 5 ); 
-    }
-
-    //this one is correct (changed dst from XZR num to 0)
-    else if(op >= OP_ADD_RI && op <= OP_ANDS_RR){
-        *src2 = bitfield_u32(insnbits, 5, 5); 
-        *dst = bitfield_u32(insnbits, 0, 5);
-    }
-
-
-    //format has all three values 
-    else if(op == OP_SUBS_RR || op == OP_CMP_RR || op == OP_MVN
-        || op == OP_ORR_RR || op == OP_EOR_RR || op == OP_TST_RR){
-            *src1 = bitfield_u32(insnbits, 5, 5); 
-            *src2 = bitfield_u32(insnbits, 15, 5); 
-            *dst = bitfield_u32(insnbits, 0, 5);
-    }
-
-    //format has src1 and src2
-    else if(op == OP_LDUR || op == OP_STUR){
+    //Same formats 
+    else if (op == OP_LDUR || op == OP_STUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = bitfield_u32(insnbits, 0, 5);
-        *dst = bitfield_u32(insnbits, 0, 5); 
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    // MOVZ and ADRP instructions have a 16-bit immediate value and a 5-bit destination register
+    else if (op == OP_MVN){
+        *src1 = XZR_NUM;
+        *src2 = bitfield_u32(insnbits, 16, 5);
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    //
+    else if (op == OP_MOVK){
+        *src1 = bitfield_u32(insnbits, 0, 5);
+        *src2 = XZR_NUM;
+        *dst = bitfield_u32(insnbits, 0, 5);
+
     }
 
     else if (op == OP_NOP){
-        *src1 = XZR_NUM; 
-        *src2 = XZR_NUM; 
-        //*dst = 0; 
-    }
-
-    else if(op == OP_RET){
-        *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = XZR_NUM; 
-        //*dst = XZR_NUM; 
-    }
-
-    else if(op == OP_LSL || op == OP_LSR){
-        *src1 = bitfield_u32(insnbits, 5, 5); 
-        *dst = bitfield_u32(insnbits, 0, 5); 
-    }
-
-    else {
-        *src1 = XZR_NUM; 
+        *src1 = XZR_NUM;
         *src2 = XZR_NUM;
+        *dst = 0;
     }
 
-    //in this case, nothing is set
-    // else{
-    //     *src1 = XZR_NUM; 
-    //     *src2 = XZR_NUM; 
-    //     *dst = XZR_NUM; 
-    // }
+    else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *dst = bitfield_u32(insnbits, 0, 5);
+        *src2 = bitfield_u32(insnbits, 16, 5);
+    }
 
-    //dst, val-w, and w-enable come from writeback
+
+    else if (op == OP_CMP_RR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = bitfield_u32(insnbits, 16, 5);
+        *dst = XZR_NUM;
+    }
+
+    else if (op == OP_MOVZ || op == OP_ADRP){
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+    
+    else if (op == OP_RET){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = XZR_NUM;
+        *dst = XZR_NUM;
+    }
+    
+    //everything else 32 val unused 
+    else{
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
+        *dst = XZR_NUM;
+    }
+
     return;
 }
 
