@@ -194,7 +194,8 @@ static uint64_t _mem_read_cache(const uint64_t addr, const unsigned width) {
             // get data from memory to store in the cache
             uint8_t *block = calloc(B, 1);
             for (int j = 0; j < B; j++) {
-                block[j] = _mem_read_LE(addr+j, 1);
+                uint64_t addr_j = (addr & ~(B-1)) + j;
+                block[j] = _mem_read_LE(addr_j, 1);
             }
             // hopefully they properly implemented writing incoming data to the cache
             evicted_line_t *evicted = handle_miss(guest.cache, block_address, READ, block);

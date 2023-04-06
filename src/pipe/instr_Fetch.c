@@ -166,7 +166,16 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
             *op = OP_CMP_RR;
         }
     }
-    
+    //ands
+    else if (itable[top11bits] == OP_ANDS_RR)
+    {
+        unsigned int switchVal = 31 & insnbits;
+        //tst if shifting
+        if (switchVal == 31)
+        {
+            *op = OP_TST_RR;
+        }
+    }
     else if (itable[top11bits] == OP_UBFM)
     {
         
@@ -177,16 +186,6 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
         else
         {
             *op = OP_LSR;
-        }
-    }
-
-        else if (itable[top11bits] == OP_ANDS_RR)
-    {
-        unsigned int switchVal = 31 & insnbits;
-        //tst if shifting
-        if (switchVal == 31)
-        {
-            *op = OP_TST_RR;
         }
     }
 
@@ -217,7 +216,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
 //  cycles' seq_succ, but instead comes from B.cond in the Memory stage, as explained in the comments.
 // select_PC(pred_PC, D_opcode, val_a, M_opcode, M_cond_val, seq_succ, *current_PC)
     //select_PC(in -> pred_PC, X_in -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
-    select_PC(in -> pred_PC, D_out -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
+    select_PC(in -> pred_PC, X_out -> op, X_out -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
 
 
     // what about instead of predict_PC, pred_PC from struct f_instr_impl

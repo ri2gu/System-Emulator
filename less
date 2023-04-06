@@ -1,0 +1,410 @@
+5c5
+< 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+---
+> 		Condition Flags: [N,Z,C,V] = [0, 0, 0, 0]
+12,15c12,15
+< 			Register  X5: ffffffff
+< 			Register  X6: ffffffff00000000
+< 			Register  X7: ffffffffffffffff
+< 			Register  X8: 0
+---
+> 			Register  X5: 1fffe
+> 			Register  X6: ffff0000ffff
+> 			Register  X7: 2fffd
+> 			Register  X8: 10000
+5c5
+< 		Condition Flags: [N,Z,C,V] = [0, 0, 1, 1]
+---
+> 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+9,10c9,10
+< 			Register  X2: ffffffffffffffff
+< 			Register  X3: 7fffffffffffffff
+---
+> 			Register  X2: 1
+> 			Register  X3: 0
+4,5c4,5
+< 		Stack Pointer: 7fffffff8
+< 		Condition Flags: [N,Z,C,V] = [0, 0, 1, 1]
+---
+> 		Stack Pointer: 2
+> 		Condition Flags: [N,Z,C,V] = [0, 0, 0, 0]
+11,13c11,13
+< 			Register  X4: f00
+< 			Register  X5: f0
+< 			Register  X6: f
+---
+> 			Register  X4: ff00
+> 			Register  X5: f00
+> 			Register  X6: 0
+4c4
+< 		Stack Pointer: 7fffffff8
+---
+> 		Stack Pointer: 0
+11,13c11,13
+< 			Register  X4: ff0ff00
+< 			Register  X5: ff0ff00000
+< 			Register  X6: f00f00ff00000000
+---
+> 			Register  X4: ff00
+> 			Register  X5: ff0ff00
+> 			Register  X6: ff0000ff00
+11,13c11,13
+< 			Register  X4: f0f0
+< 			Register  X5: f0f
+< 			Register  X6: f0f0
+---
+> 			Register  X4: 0
+> 			Register  X5: f0f0
+> 			Register  X6: ffff
+11,14c11,14
+< 			Register  X4: ffffffffffff00ff
+< 			Register  X5: fffffffff00fffff
+< 			Register  X6: ffffff00ffffffff
+< 			Register  X7: ff0ffffffffffff
+---
+> 			Register  X4: ffffffffffffffff
+> 			Register  X5: ffffffffffffffff
+> 			Register  X6: ffffffffffffffff
+> 			Register  X7: ffffffffffffffff
+1c1
+< Machine state checkpoint after 20 cycles:
+---
+> Machine state checkpoint after 10 cycles:
+3,4c3,4
+< 		Program Counter: 400150
+< 		Stack Pointer: 7fffffff8
+---
+> 		Program Counter: 400138
+> 		Stack Pointer: ffffffffffffffe0
+11,14c11,14
+< 			Register  X4: 1f
+< 			Register  X5: 29
+< 			Register  X6: 3b
+< 			Register  X7: 1a
+---
+> 			Register  X4: 0
+> 			Register  X5: 0
+> 			Register  X6: 0
+> 			Register  X7: 0
+38c38
+< 		Status: HLT
+---
+> 		Status: ADR
+79,82d78
+< 			Address 0x7ffffffd8: 0x1f
+< 			Address 0x7ffffffe0: 0x29
+< 			Address 0x7ffffffe8: 0x3b
+< 			Address 0x7fffffff0: 0x1a
+8c8
+< 			Register  X1: 19
+---
+> 			Register  X1: 0
+8,11c8,11
+< 			Register  X1: 64
+< 			Register  X2: c8
+< 			Register  X3: 12c
+< 			Register  X4: 190
+---
+> 			Register  X1: 0
+> 			Register  X2: 0
+> 			Register  X3: 0
+> 			Register  X4: 0
+7c7
+< 			Register  X0: 123456789101
+---
+> 			Register  X0: 9101
+9c9
+< 			Register  X2: 9a
+---
+> 			Register  X2: 44
+5c5
+< 		Condition Flags: [N,Z,C,V] = [1, 0, 0, 0]
+---
+> 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+9c9
+< 			Register  X2: ffffffffffffffa8
+---
+> 			Register  X2: 0
+1c1
+< Machine state checkpoint after 35 cycles:
+---
+> Machine state checkpoint after 41 cycles:
+4,5c4,5
+< 		Stack Pointer: 7fffffff8
+< 		Condition Flags: [N,Z,C,V] = [1, 0, 0, 0]
+---
+> 		Stack Pointer: 0
+> 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+7c7
+< 			Register  X0: 34
+---
+> 			Register  X0: 1
+9c9
+< 			Register  X2: b
+---
+> 			Register  X2: 4f
+9c9
+< 			Register  X2: bf
+---
+> 			Register  X2: 37
+7,8c7,8
+< 			Register  X0: abcddcba
+< 			Register  X1: abcddcba
+---
+> 			Register  X0: dcba
+> 			Register  X1: dcba
+9c9
+< 			Register  X2: 5c
+---
+> 			Register  X2: 94
+10,11c10,11
+< 			Register  X3: 1e
+< 			Register  X4: 7c
+---
+> 			Register  X3: 18
+> 			Register  X4: 6a
+1c1
+< Machine state checkpoint after 34 cycles:
+---
+> Machine state checkpoint after 41 cycles:
+5c5
+< 		Condition Flags: [N,Z,C,V] = [1, 0, 0, 0]
+---
+> 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+7,8c7,8
+< 			Register  X0: 1
+< 			Register  X1: 2
+---
+> 			Register  X0: ffff
+> 			Register  X1: a455
+10c10
+< 			Register  X3: ffffffffffffffff
+---
+> 			Register  X3: 0
+1c1
+< Machine state checkpoint after 41 cycles:
+---
+> Machine state checkpoint after 18 cycles:
+3c3
+< 		Program Counter: 400114
+---
+> 		Program Counter: 40011c
+5c5
+< 		Condition Flags: [N,Z,C,V] = [1, 0, 0, 0]
+---
+> 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+7c7
+< 			Register  X0: 1a
+---
+> 			Register  X0: 1
+10c10
+< 			Register  X3: ffffffffffffffff
+---
+> 			Register  X3: 0
+12c12
+< 			Register  X5: ffffffffffffffff
+---
+> 			Register  X5: 0
+1c1
+< Machine state checkpoint after 21 cycles:
+---
+> Machine state checkpoint after 14 cycles:
+3,4c3,4
+< 		Program Counter: 400158
+< 		Stack Pointer: 7fffffff8
+---
+> 		Program Counter: 400128
+> 		Stack Pointer: fffffffffffffff0
+7,11c7,11
+< 			Register  X0: 400150
+< 			Register  X1: 400138
+< 			Register  X2: 7b
+< 			Register  X3: ea
+< 			Register  X4: 159
+---
+> 			Register  X0: 400000
+> 			Register  X1: 400000
+> 			Register  X2: 40007b
+> 			Register  X3: 4000ea
+> 			Register  X4: 400159
+38c38
+< 		Status: HLT
+---
+> 		Status: INS
+1c1
+< Machine state checkpoint after 14 cycles:
+---
+> Machine state checkpoint after 13 cycles:
+1c1
+< Machine state checkpoint after 14 cycles:
+---
+> Machine state checkpoint after 13 cycles:
+1c1
+< Machine state checkpoint after 14 cycles:
+---
+> Machine state checkpoint after 13 cycles:
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410001
+---
+> 			Register  X0: 1
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410002
+---
+> 			Register  X0: 2
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410003
+---
+> 			Register  X0: 3
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410004
+---
+> 			Register  X0: 4
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410005
+---
+> 			Register  X0: 5
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410006
+---
+> 			Register  X0: 6
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+1c1
+< Machine state checkpoint after 10 cycles:
+---
+> Machine state checkpoint after 12 cycles:
+7c7
+< 			Register  X0: 410007
+---
+> 			Register  X0: 7
+38c38
+< 		Status: ADR
+---
+> 		Status: HLT
+7c7
+< 			Register  X0: 410001
+---
+> 			Register  X0: 1
+7c7
+< 			Register  X0: 410002
+---
+> 			Register  X0: 2
+7c7
+< 			Register  X0: 410003
+---
+> 			Register  X0: 3
+7c7
+< 			Register  X0: 410004
+---
+> 			Register  X0: 4
+7c7
+< 			Register  X0: 410005
+---
+> 			Register  X0: 5
+7c7
+< 			Register  X0: 410006
+---
+> 			Register  X0: 6
+7c7
+< 			Register  X0: 410007
+---
+> 			Register  X0: 7
+1c1
+< Machine state checkpoint after 147 cycles:
+---
+> Machine state checkpoint after 24 cycles:
+3,5c3,5
+< 		Program Counter: 400128
+< 		Stack Pointer: 7fffffff8
+< 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+---
+> 		Program Counter: 40010c
+> 		Stack Pointer: 0
+> 		Condition Flags: [N,Z,C,V] = [0, 1, 0, 0]
+7,10c7,10
+< 			Register  X0: 78
+< 			Register  X1: ffffffffffffffff
+< 			Register  X2: 0
+< 			Register  X3: f0
+---
+> 			Register  X0: 0
+> 			Register  X1: 0
+> 			Register  X2: 5
+> 			Register  X3: 7fffffff8
+13c13
+< 			Register  X6: 1
+---
+> 			Register  X6: 0
+1c1
+< Machine state checkpoint after 488 cycles:
+---
+> Machine state checkpoint after 500 cycles:
+3c3
+< 		Program Counter: 400120
+---
+> 		Program Counter: 40015c
+5c5
+< 		Condition Flags: [N,Z,C,V] = [0, 1, 1, 0]
+---
+> 		Condition Flags: [N,Z,C,V] = [0, 0, 0, 0]
+7,10c7,10
+< 			Register  X0: 1a6d
+< 			Register  X1: ffffffffffffffff
+< 			Register  X2: 2ac2
+< 			Register  X3: 2ac2
+---
+> 			Register  X0: 7fffffff8
+> 			Register  X1: 80000000d
+> 			Register  X2: 7fffffff8
+> 			Register  X3: ffffffff0
+38c38
+< 		Status: HLT
+---
+> 		Status: BUB
+Total score for week 1: 0.20
