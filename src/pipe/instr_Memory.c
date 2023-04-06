@@ -46,9 +46,19 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
 
     // generated in decode and used in memory 1 if read 0 not
     // dmem_read dmem_write 1 if write 0 not (if read or write)
-    if(in -> M_sigs.dmem_read ||in -> M_sigs.dmem_write){
+    if(in -> M_sigs.dmem_read == true ||in -> M_sigs.dmem_write == true){
         dmem(in -> val_ex, in -> val_b, (in -> M_sigs).dmem_read, 
             (in -> M_sigs).dmem_write, &(out -> val_mem), &dmem_error); 
+    }
+
+        if(dmem_error == true){
+            //if(in -> M_sigs.dmem_read || in -> M_sigs.dmem_write){
+                out -> status = STAT_ADR; 
+                //in -> op = OP_RET;
+            
+            return; 
+        //}
+
     }
 
     //updating values to regs 
@@ -63,14 +73,14 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     // }
 
     //this is where you handle the stat adr error
-    if(dmem_error == true){
-        if(in -> M_sigs.dmem_read ||in -> M_sigs.dmem_write){
-            out -> status = STAT_ADR; 
+    // if(dmem_error == true){
+    //     if(in -> M_sigs.dmem_read || in -> M_sigs.dmem_write){
+    //         out -> status = STAT_ADR; 
             
-            return; 
-        }
+    //         return; 
+    //     }
 
-    }
+    // }
     
     out -> status = in -> status; 
     return;

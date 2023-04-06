@@ -64,7 +64,7 @@ generate_DXMW_control(opcode_t op,
     op == OP_SUBS_RR || op == OP_ORR_RR || op == OP_LDUR) ? 1 : 0;
 
     if(op == OP_ERROR){
-        W_sigs -> w_enable = false; 
+        W_sigs -> w_enable = 1; 
     }
 
 
@@ -299,7 +299,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
-        *dst = XZR_NUM;
+        //*dst = XZR_NUM;
     }
 
     else if(op == OP_BL){
@@ -338,6 +338,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     out -> op = in -> op;
     out -> print_op = in -> print_op; 
 
+   
     generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs)); 
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
