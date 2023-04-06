@@ -156,25 +156,41 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
     // out->op get the modified/alias instruction?
     // no its the other way around
 
-    // check if it's an aliased instruction (LSL & LSR share the same opcode)
-    if ((*op == OP_UBFM)) {
-        //use the values from that point in order to differentiate between the two with the same opcode 
-        uint32_t diff = bitfield_u32(insnbits, 11, 1);
-        if (diff == 0x1) {
+    // aliased instruction (LSL & LSR share the same opcode)
+    // shift based on if the OP == SUBS_RR
+    if (itable[top11bits] == OP_SUBS_RR)
+    {
+        unsigned int switchVal = 31 & insnbits;
+        if (switchVal == 31)
+        {
+            *op = OP_CMP_RR;
+        }
+    }
+    
+    else if (itable[top11bits] == OP_UBFM)
+    {
+        
+        if (bitfield_u32(insnbits, 10, 12) != 31)
+        {
+            *op = OP_LSL;
+        }
+        else
+        {
             *op = OP_LSR;
         }
-        else{
-            *op = OP_LSL; 
-        }
-    }
- 
-    if(top11bits == OP_SUBS_RR){
-        *op = OP_CMP_RR; 
     }
 
-    if(top11bits == OP_ANDS_RR){
-        *op = OP_TST_RR; 
+        else if (itable[top11bits] == OP_ANDS_RR)
+    {
+        unsigned int switchVal = 31 & insnbits;
+        //tst if shifting
+        if (switchVal == 31)
+        {
+            *op = OP_TST_RR;
+        }
     }
+
+    return;
 }
 
 /*
@@ -232,7 +248,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
             uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
             fix_instr_aliases(out->insnbits, &itable[top11]);
             out -> op = itable[top11]; 
-            out -> print_op = out -> op; 
+            out -> print_op = itable[top11]; 
             predict_PC(current_PC, out->insnbits, out -> op, &(F_PC), &(out->seq_succ_PC)); 
 
             //setting current to successor

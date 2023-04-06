@@ -273,7 +273,6 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_NOP){
         *src1 = XZR_NUM;
         *src2 = XZR_NUM;
-        *dst = 0;
     }
 
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
@@ -298,7 +297,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
-        //*dst = XZR_NUM;
+        *dst = XZR_NUM;
     }
 
     else if(op == OP_BL){
@@ -310,11 +309,11 @@ extract_regs(uint32_t insnbits, opcode_t op,
     }
     
     //everything else 32 val unused 
-    else{
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM;
-        *dst = XZR_NUM;
-    }
+    // else{
+    //     *src1 = XZR_NUM;
+    //     *src2 = XZR_NUM;
+    //     *dst = XZR_NUM;
+    // }
 
     return;
 }
