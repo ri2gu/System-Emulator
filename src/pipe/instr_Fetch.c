@@ -120,17 +120,22 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
 
     //GIRLLLL u forgot to account for dis one 
     else if (op == OP_ERROR){
-        *predicted_PC = current_PC; 
+        *predicted_PC = *seq_succ;  
     }   
-
-    ///default is just us moving down on to the next one
-    else{
-        *predicted_PC = current_PC + 4; 
+    else
+    {
+        // The updated values of predicted_PC and seq_succ are stored in the pointers passed as arguments to the function.
+        *predicted_PC = current_PC + 4;
     }
-
-    //special case for adrp, change current_PC for alignment purposes
-    *seq_succ = (op == OP_ADRP) ? (current_PC & 0xfffffffffffff000) : (current_PC + 4);
-
+    // If the operation is OP_ADRP, the seq_succ is modified to align the current PC with a 4KB page boundary by zeroing out the 12 least significant bits.
+    if (op == OP_ADRP)
+    {
+        *seq_succ = current_PC & 0xfffffffffffff000;
+    }
+    else
+    {
+        *seq_succ = current_PC + 4;
+    }
 
     return; 
 }
