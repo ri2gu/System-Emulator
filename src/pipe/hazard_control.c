@@ -90,28 +90,31 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     pipe_control_stage(S_MEMORY, false, false);
     pipe_control_stage(S_WBACK, false, false);
 
-    //calling all of the functions here 
-    if(check_ret_hazard(D_opcode) == true){
-        //squash the results of that fetch stage by bubbling
-        pipe_control_stage(S_FETCH, true, false); 
-        //F_out -> status = STAT_BUB; 
-    }
 
     if(check_mispred_branch_hazard(X_opcode, X_condval) == true){
         //by the time the x stage ends, you know you predicted incorrectly 
         //therefore you can't let whatever is in F and D continue to x so bubble
         pipe_control_stage(S_DECODE, true, false);  
-        pipe_control_stage(S_FETCH, true, false);
+
         //D_out -> status = STAT_BUB; 
 
     }
 
     if(check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst) == true){
         //bubble the execute stage and stall the earlier stages 
-        pipe_control_stage(S_EXECUTE, true, false); 
-        pipe_control_stage(S_DECODE, false, true); 
-        pipe_control_stage(S_FETCH, false, true); 
+        //pipe_control_stage(S_EXECUTE, true, false); 
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, true, false);  
+        
         //D_out -> status = STAT_BUB; 
+    }
+
+
+    //calling all of the functions here 
+    if(check_ret_hazard(D_opcode) == true){
+        //squash the results of that fetch stage by bubbling
+        pipe_control_stage(S_FETCH, true, false); 
+        //F_out -> status = STAT_BUB; 
     }
 
 }

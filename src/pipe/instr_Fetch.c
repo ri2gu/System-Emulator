@@ -122,6 +122,7 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
     else if (op == OP_ERROR){
         *predicted_PC = *seq_succ;  
     }   
+
     else
     {
         // The updated values of predicted_PC and seq_succ are stored in the pointers passed as arguments to the function.
@@ -281,6 +282,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     }
 
     else{
+        in -> status = STAT_AOK; 
         out -> status = STAT_AOK; 
     }
     return;

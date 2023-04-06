@@ -241,7 +241,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     //grouping together here based on formats 
     if (op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR || op == OP_UBFM || op == OP_ASR){
-        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = bitfield_u32(insnbits, 5, 5);
         //*src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
@@ -266,9 +266,9 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     //
     else if (op == OP_MOVK){
-        *src1 = bitfield_u32(insnbits, 0, 5);
-        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
+        *src1 = XZR_NUM;
+        *src2 = bitfield_u32(insnbits, 16, 5);
 
     }
 

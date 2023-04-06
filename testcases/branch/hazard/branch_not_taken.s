@@ -11,7 +11,7 @@ start:
 .goback:
     // Print x0
     // correct: 1
-    eor 	x5, x5, x5
+    eor 	binx5, x5, x5
 	mvn 	x5, x5
 	stur	x0, [x5]
 	ret

@@ -37,7 +37,7 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
     copy_w_ctl_sigs(&(out -> W_sigs), &(in -> W_sigs)); 
     //dmem(&(in -> dmem_addr), &(in -> dmem_read), ); 
     out->dst = in->dst; // is this how things 'just carry'?
-    //out -> status = in -> status; 
+    out -> status = in -> status; 
     out -> op = in -> op; 
     out -> print_op = in -> print_op;
     out -> val_ex = in -> val_ex;
