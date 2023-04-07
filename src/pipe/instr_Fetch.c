@@ -119,9 +119,9 @@ predict_PC(uint64_t current_PC, uint32_t insnbits, opcode_t op,
     }
 
     //GIRLLLL u forgot to account for dis one 
-    else if (op == OP_ERROR){
-        *predicted_PC = *seq_succ;  
-    }   
+    // else if (op == OP_ERROR && X_condval == true){
+    //     *predicted_PC = *seq_succ;  
+    // }   
     else
     {
         // The updated values of predicted_PC and seq_succ are stored in the pointers passed as arguments to the function.
@@ -271,7 +271,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     }
 
     //trying to solve program counter issue here?
-    if(F_out -> status == STAT_INS){
+    if(out -> status == STAT_INS){
         in -> status = STAT_INS; 
     }
 
@@ -281,6 +281,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     }
 
     else{
+        in -> status = STAT_AOK; 
         out -> status = STAT_AOK; 
     }
     return;
