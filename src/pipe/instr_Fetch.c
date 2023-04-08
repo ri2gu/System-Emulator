@@ -257,10 +257,10 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
             }
 
             //changing op and status to account for running into an error operation 
-            if(out -> op == OP_ERROR){
-                out -> op = OP_NOP; 
-                out -> status = STAT_INS; 
-            }
+            // if(out -> op == OP_ERROR){
+            //     out -> op = OP_NOP; 
+            //     out -> status = STAT_INS; 
+            // }
 
             if (out->status == STAT_INS) {
                 F_out->pred_PC = D_in->seq_succ_PC;
