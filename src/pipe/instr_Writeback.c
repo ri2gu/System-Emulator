@@ -32,19 +32,21 @@ extern int64_t W_wval;
  */
 
 comb_logic_t wback_instr(w_instr_impl_t *in) {
-    X_out -> status = in -> status;
     //dmem_status = in -> status; // ??????? how does this work
     //F_in -> status  = in -> op; 
     //= in -> print_op; 
 
     if(in->status == STAT_INS) {
-
         in->W_sigs.w_enable = false;
 
     }
 
     if(in -> status == STAT_INS){
         in -> status = STAT_HLT; 
+    }
+
+    if(in -> status == STAT_HLT){
+        in -> status = STAT_BUB; 
     }
 
 
