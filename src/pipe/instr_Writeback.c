@@ -42,7 +42,11 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
 
     }
 
-    if(in -> status == STAT_HLT){
+    if(in -> status == STAT_INS){
+        in -> status = STAT_HLT; 
+    }
+
+    if(X_out -> op == OP_ERROR){
         in -> status = STAT_INS; 
     }
     
