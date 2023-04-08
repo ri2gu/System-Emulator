@@ -53,6 +53,7 @@ bool check_ret_hazard(opcode_t D_opcode) {
     if(D_opcode == OP_RET){
         return true; 
     }
+    //F_out -> status = STAT_BUB;
     return false;
 }
 
@@ -60,9 +61,10 @@ bool check_mispred_branch_hazard(opcode_t X_opcode, bool X_condval) {
     //happens in the x stage, if branch was cond but cond evaluated to false 
     //by the time the x stage ends, you know you predicted incorrectly 
     //therefore you can't let whatever is in F and D continue to x so bubble
-    if(X_opcode == OP_B_COND && X_condval == false){
+    if(X_opcode == OP_B_COND && !X_condval){
         return true; 
     }
+    // D_out -> status = STAT_BUB;
     return false;
 }
 
@@ -71,12 +73,13 @@ bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     //when an instruction is trying to read in a value from reg that hasn't been read from mem yet
     //forwarding won't work for load cases?
     //have to check for possible forwarding 
-    bool check = D_src1 == X_dst; 
-    bool check2 = D_src2 == X_dst;
-    bool finalCheck = check || check2; 
-    if(X_opcode == OP_LDUR && finalCheck){
+    // bool check = D_src1 == X_dst;
+    // bool check2 = D_src2 == X_dst;
+    // bool finalCheck = check || check2;
+    if(X_opcode == OP_LDUR && ((X_out->dst == D_src1) || (X_out->dst == D_src2))){
         return true; 
     }
+    // D_out -> status = STAT_BUB;
     return false;
 }
 
@@ -96,7 +99,7 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         //therefore you can't let whatever is in F and D continue to x so bubble
         pipe_control_stage(S_DECODE, true, false);  
 
-        //D_out -> status = STAT_BUB; 
+        //D_out -> status = STAT_BUB;
 
     }
 
@@ -106,15 +109,15 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, true, false);  
         
-        //D_out -> status = STAT_BUB; 
+        //D_out -> status = STAT_BUB;
     }
 
 
     //calling all of the functions here 
     if(check_ret_hazard(D_opcode) == true){
         //squash the results of that fetch stage by bubbling
-        pipe_control_stage(S_FETCH, true, false); 
-        //F_out -> status = STAT_BUB; 
+        pipe_control_stage(S_FETCH, false, false); 
+        //F_out -> status = STAT_BUB;
     }
 
 }
