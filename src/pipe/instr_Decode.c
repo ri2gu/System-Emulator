@@ -344,9 +344,9 @@ extract_regs(uint32_t insnbits, opcode_t op,
     }
 
     else if(op == OP_HLT){
-        *dst = XZR_NUM; 
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM; 
+        *dst = 0x0UL; 
+        *src1 = 0x0UL;
+        *src2 = 0x0UL; 
     }
     
     return;
@@ -417,10 +417,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     //     in -> status = OP_HLT; 
     //     //out -> status = OP_HLT; 
     // }
-    if (out->op == OP_HLT) { //do it for every status 
-        in->status = STAT_HLT;
-        out->status = STAT_HLT;
-    }
+    // if (out->op == OP_HLT) { //do it for every status 
+    //     in->status = STAT_HLT;
+    //     out->status = STAT_HLT;
+    // }
 
 
     // if(out -> op == OP_HLT && in -> status == STAT_INS){
