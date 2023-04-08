@@ -272,8 +272,9 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     }
 
     //trying to solve program counter issue here?
-    if(F_out -> status == STAT_INS){
-        in -> status = STAT_INS; 
+    if(out -> status == STAT_INS){
+        out -> op = OP_HLT; 
+        //in -> status = STAT_INS; 
     }
 
     else if (out->op == OP_HLT) { //do it for every status 
