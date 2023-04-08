@@ -1,0 +1,66 @@
+Machine state checkpoint after 18 cycles:
+	Processor state:
+		Program Counter: 4000e8
+		Stack Pointer: 7fffffff8
+		Condition Flags: [N,Z,C,V] = [1, 0, 0, 0]
+		General Purpose Register File state:
+			Register  X0: 0
+			Register  X1: 1
+			Register  X2: 1
+			Register  X3: 1234
+			Register  X4: 5678
+			Register  X5: 0
+			Register  X6: 0
+			Register  X7: 0
+			Register  X8: 0
+			Register  X9: 0
+			Register X10: 0
+			Register X11: 0
+			Register X12: 0
+			Register X13: 0
+			Register X14: 0
+			Register X15: 0
+			Register X16: 0
+			Register X17: 0
+			Register X18: 0
+			Register X19: 0
+			Register X20: 0
+			Register X21: 0
+			Register X22: 0
+			Register X23: 0
+			Register X24: 0
+			Register X25: 0
+			Register X26: 0
+			Register X27: 0
+			Register X28: 0
+			Register X29: 0
+			Register X30: 0
+		Status: HLT
+	Memory state:
+		Text segment:
+			Address 0x400000: 0x10102464c457f
+			Address 0x400010: 0x100b70002
+			Address 0x400018: 0x4000b0
+			Address 0x400020: 0x40
+			Address 0x400028: 0x2e0
+			Address 0x400030: 0x38004000000000
+			Address 0x400038: 0x5000600400002
+			Address 0x400040: 0x500000001
+			Address 0x400050: 0x400000
+			Address 0x400058: 0x400000
+			Address 0x400060: 0xe4
+			Address 0x400068: 0xe4
+			Address 0x400070: 0x10000
+			Address 0x400078: 0x66474e551
+			Address 0x4000a8: 0x10
+			Address 0x4000b0: 0xd2800022d2800021
+			Address 0x4000b8: 0x91000400eb020020
+			Address 0x4000c0: 0xd28acf04d2824683
+			Address 0x4000c8: 0xaa2503e554000080
+			Address 0x4000d0: 0xd65f03c0f80000a3
+			Address 0x4000d8: 0xf80000a4aa2503e5
+			Address 0x4000e0: 0xd65f03c0
+		Data segment:
+		Heap:
+		Stack:
+
