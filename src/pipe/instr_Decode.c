@@ -243,7 +243,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     if (op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR || op == OP_UBFM || op == OP_ASR){
         // bits 9-5 = source register number
         *src1 = bitfield_u32(insnbits, 5, 5);
-        //*src2 = XZR_NUM;
+        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
