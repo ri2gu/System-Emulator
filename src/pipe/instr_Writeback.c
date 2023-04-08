@@ -36,27 +36,16 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     //F_in -> status  = in -> op; 
     //= in -> print_op; 
 
-        if(in -> status == STAT_INS){
-        in -> status = STAT_HLT; 
-    }
 
-    if(in->status == STAT_INS) {
-        in->W_sigs.w_enable = false;
-    }
-
-    // if(in -> status == STAT_INS){
-    //     in -> status = STAT_HLT; 
-    // }
-
-    if(X_out -> op == OP_ERROR){
-        in -> status = STAT_INS; 
-    }
     
     // val_ex is the address and val_b is the thing u need to write in address
     
     // val_w needs to be fed back
     // dst_sel needs to be fed back 
     // w_enable needs to be fed back 
+    if(in -> status == STAT_INS){
+        in -> status = STAT_HLT; 
+    }
 
     // 2:1 mux
     // wval_sel if 0 val ex if 1 val mem

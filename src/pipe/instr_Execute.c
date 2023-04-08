@@ -37,12 +37,6 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
-    out->dst = in->dst;
-    out->op = in->op;
-    out->print_op = in->print_op;
-    out->seq_succ_PC = in->seq_succ_PC;
-    out->val_b = in->val_b;
-    out->status = in->status;
     // out -> op = in -> op;
     // out -> print_op = in-> print_op; // simply continues on 
     // out->dst = in->dst;
@@ -62,9 +56,6 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     //have to throw ins for status if ret but unaligned
     if(in -> op == OP_RET){
         out -> status = STAT_INS; 
-    }
-    if(in->op == OP_BL) {
-        in->val_a = in->seq_succ_PC;
     }
 
     // i think im supposed to first see if set_cc is true or not
@@ -95,9 +86,6 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
 
     //then you actually want to set condval (can finally stop failing those lol)
     X_condval = out -> cond_holds; 
-        if(in -> status == STAT_INS){
-        in -> status = STAT_HLT; 
-    }
 
     // switch (in->ALU_op) {
     //     case PLUS_OP:
@@ -153,12 +141,12 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     // }
 
     //update conditions afterwards
-    // out->dst = in->dst;
-    // out->op = in->op;
-    // out->print_op = in->print_op;
-    // out->seq_succ_PC = in->seq_succ_PC;
-    // out->val_b = in->val_b;
-    // out->status = in->status;
+    out->dst = in->dst;
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->seq_succ_PC = in->seq_succ_PC;
+    out->val_b = in->val_b;
+    out->status = in->status;
     
     return;
 }
