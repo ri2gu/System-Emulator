@@ -32,6 +32,7 @@ extern int64_t W_wval;
  */
 
 comb_logic_t wback_instr(w_instr_impl_t *in) {
+    X_out -> status = in -> status;
     //dmem_status = in -> status; // ??????? how does this work
     //F_in -> status  = in -> op; 
     //= in -> print_op; 
@@ -45,6 +46,8 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     if(in -> status == STAT_INS){
         in -> status = STAT_HLT; 
     }
+
+
     
     // val_ex is the address and val_b is the thing u need to write in address
     
