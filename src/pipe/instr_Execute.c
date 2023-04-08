@@ -95,6 +95,9 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
 
     //then you actually want to set condval (can finally stop failing those lol)
     X_condval = out -> cond_holds; 
+        if(in -> status == STAT_INS){
+        in -> status = STAT_HLT; 
+    }
 
     // switch (in->ALU_op) {
     //     case PLUS_OP:
