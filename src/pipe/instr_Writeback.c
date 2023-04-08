@@ -37,19 +37,14 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     //= in -> print_op; 
 
     if(in->status == STAT_INS) {
+
         in->W_sigs.w_enable = false;
 
     }
 
-    if(in -> status == STAT_INS){
-        in -> status = STAT_HLT; 
-    }
-
     if(in -> status == STAT_HLT){
-        in -> status = STAT_BUB; 
+        in -> status = STAT_INS; 
     }
-
-
     
     // val_ex is the address and val_b is the thing u need to write in address
     
