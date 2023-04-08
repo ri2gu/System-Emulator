@@ -36,15 +36,17 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     //F_in -> status  = in -> op; 
     //= in -> print_op; 
 
-    if(in->status == STAT_INS) {
-
-        in->W_sigs.w_enable = false;
-
-    }
-
-    if(in -> status == STAT_INS){
+        if(in -> status == STAT_INS){
         in -> status = STAT_HLT; 
     }
+
+    if(in->status == STAT_INS) {
+        in->W_sigs.w_enable = false;
+    }
+
+    // if(in -> status == STAT_INS){
+    //     in -> status = STAT_HLT; 
+    // }
 
     if(X_out -> op == OP_ERROR){
         in -> status = STAT_INS; 
