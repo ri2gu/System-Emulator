@@ -344,9 +344,9 @@ extract_regs(uint32_t insnbits, opcode_t op,
     }
 
     else if(op == OP_HLT){
-        *dst = XZR_NUM; 
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM; 
+        *dst = 0x0UL; 
+        *src1 = 0x0UL;
+        *src2 = 0x0UL; 
     }
     
     return;
