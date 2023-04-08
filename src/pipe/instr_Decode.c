@@ -248,7 +248,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     else if(op == OP_ADD_RI){
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = 0x0UL;
+        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -410,6 +410,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     if(out -> op == OP_ERROR){
         out -> op = OP_NOP;
         out -> status = STAT_INS; 
+    }
+
+    if(in -> op == OP_ERROR){
+        out -> op = OP_HLT; 
     }
 
     // if(out -> op == OP_HLT){

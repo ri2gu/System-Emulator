@@ -282,6 +282,10 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         out->status = STAT_HLT;
     }
 
+    else if(out -> op == OP_ERROR){
+        D_out -> op = OP_HLT; 
+    }
+
     else{
         in -> status = STAT_AOK; 
         out -> status = STAT_AOK; 

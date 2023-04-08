@@ -37,6 +37,12 @@ extern comb_logic_t copy_w_ctl_sigs(w_ctl_sigs_t *, w_ctl_sigs_t *);
  */
 
 comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
+    out->dst = in->dst;
+    out->op = in->op;
+    out->print_op = in->print_op;
+    out->seq_succ_PC = in->seq_succ_PC;
+    out->val_b = in->val_b;
+    out->status = in->status;
     // out -> op = in -> op;
     // out -> print_op = in-> print_op; // simply continues on 
     // out->dst = in->dst;
@@ -144,12 +150,12 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     // }
 
     //update conditions afterwards
-    out->dst = in->dst;
-    out->op = in->op;
-    out->print_op = in->print_op;
-    out->seq_succ_PC = in->seq_succ_PC;
-    out->val_b = in->val_b;
-    out->status = in->status;
+    // out->dst = in->dst;
+    // out->op = in->op;
+    // out->print_op = in->print_op;
+    // out->seq_succ_PC = in->seq_succ_PC;
+    // out->val_b = in->val_b;
+    // out->status = in->status;
     
     return;
 }
