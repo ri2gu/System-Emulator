@@ -379,11 +379,12 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
    
     generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs)); 
+    extract_immval(in -> insnbits, in -> op, &(out -> val_imm));
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
             regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
 
-    extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
+    //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
     //if(W_in->status == STAT_AOK){
         //regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
     //}
@@ -394,27 +395,27 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
             W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
     //special cases depending on opcodes 
     //setting cond value here 
-    if(in -> op == OP_B_COND){
-        out -> cond = (cond_t)bitfield_u32(in -> insnbits, 0, 4); 
-    }
+    // if(in -> op == OP_B_COND){
+    //     out -> cond = (cond_t)bitfield_u32(in -> insnbits, 0, 4); 
+    // }
 
-    //setting val_hw for mov vals
-    out->val_hw = (in->op == OP_MOVZ || in->op == OP_MOVK) ? bitfield_u32(in->insnbits, 21, 2) << 4 : 0;
+    // //setting val_hw for mov vals
+    // out->val_hw = (in->op == OP_MOVZ || in->op == OP_MOVK) ? bitfield_u32(in->insnbits, 21, 2) << 4 : 0;
 
-    //set it equal to current_PC essentially?
-    if(in -> op == OP_ADRP){
-        out -> val_a = in -> this_PC; 
-    }
+    // //set it equal to current_PC essentially?
+    // if(in -> op == OP_ADRP){
+    //     out -> val_a = in -> this_PC; 
+    // }
 
-    //error handling 
-    if(out -> op == OP_ERROR){
-        out -> op = OP_NOP;
-        out -> status = STAT_INS; 
-    }
+    // //error handling 
+    // if(out -> op == OP_ERROR){
+    //     out -> op = OP_NOP;
+    //     out -> status = STAT_INS; 
+    // }
 
-    if(in -> op == OP_ERROR){
-        out -> op = OP_HLT; 
-    }
+    // if(in -> op == OP_ERROR){
+    //     out -> op = OP_HLT; 
+    // }
 
     // if(out -> op == OP_HLT){
     //     //out -> op = OP_HLT; 
