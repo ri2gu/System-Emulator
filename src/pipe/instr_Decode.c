@@ -248,7 +248,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     else if(op == OP_ADD_RI){
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = 0x0UL;
+        *src2 = bitfield_u32(insnbits,16, 5);;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -267,14 +267,14 @@ extract_regs(uint32_t insnbits, opcode_t op,
     //Same formats 
     else if (op == OP_LDUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = bitfield_u32(insnbits, 0, 5);
-        *dst = 0x0UL; 
+        *src2 = *src1; 
+        *dst = bitfield_u32(insnbits, 0, 5);
     }
 
     else if(op == OP_STUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = bitfield_u32(insnbits, 0, 5);
-        *dst = 0x0UL; 
+        *dst = bitfield_u32(insnbits, 0, 5);
 
     }
 
