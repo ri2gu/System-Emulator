@@ -381,9 +381,11 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs)); 
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
-            regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
-
     extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
+
+    regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
+
+    //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
     //if(W_in->status == STAT_AOK){
         //regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
     //}

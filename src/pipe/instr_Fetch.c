@@ -275,7 +275,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         in -> status = STAT_INS; 
     }
 
-    else if (out->op == OP_HLT) { //do it for every status 
+    else if (D_in->op == OP_HLT) { //do it for every status 
         in->status = STAT_HLT;
         out->status = STAT_HLT;
     }
