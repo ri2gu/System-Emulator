@@ -24,19 +24,19 @@ if (W_w_enable){
     //W_val_select actually sets the value, this current implementation just tells us that we need to set the value
     if(W_wval_sel == true){
         if(W_dst == D_src1){
-            *val_a = W_val_mem; 
-        }
-
-        else{
             *val_a = W_val_ex; 
         }
 
+        else{
+            *val_a = W_val_mem; 
+        }
+
         if(W_dst == D_src2){
-            *val_b = W_val_mem; 
+            *val_b = W_val_ex; 
         }
 
         else{
-            *val_b = W_val_ex; 
+            *val_b = W_val_mem; 
         }
         
     }
@@ -51,19 +51,19 @@ if (W_w_enable){
 if (M_w_enable){
     if(M_wval_sel == true){
         if(M_dst == D_src1){
-            *val_a = M_val_mem; //*val_a = W_val_ex; 
+            *val_a = W_val_ex; 
         }
 
         else{
-            *val_a = W_val_ex;//*val_a = M_val_mem; 
+            *val_a = M_val_mem; 
         }
 
         if(M_dst == D_src2){
-            *val_b = M_val_mem;//*val_b = M_val_ex; 
+            *val_b = M_val_ex; 
         }
 
         else{
-            *val_b = M_val_ex;//*val_b = M_val_mem; 
+            *val_b = M_val_mem; 
         }
     // *val_a = M_wval_sel ? W_val_mem : W_val_ex;
     // *val_b = M_wval_sel ? W_val_mem : W_val_ex;
@@ -76,10 +76,18 @@ if (X_w_enable){
         *val_a = X_val_ex; 
     }
 
+    else{
+        *val_a = *val_a; 
+    }
+
 
     //is X_out's dst register == D_out's source 2 register? X_out's dst = x4 != D_out's source 2 (x5). So change X_in's val_b to M_in's computed val_ex. 
     if(X_dst == D_src2){
         *val_b = X_val_ex; //same thing, then we just leave val_b alone
+    }
+
+    else{
+        *val_b = *val_b;
     }
 
 
