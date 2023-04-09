@@ -43,9 +43,9 @@ comb_logic_t wback_instr(w_instr_impl_t *in) {
     // val_w needs to be fed back
     // dst_sel needs to be fed back 
     // w_enable needs to be fed back 
-    if(in -> status == STAT_INS){
-        in -> status = STAT_HLT; 
-    }
+    // if(in -> status == STAT_INS){
+    //     in -> status = STAT_HLT; 
+    // }
 
     // 2:1 mux
     // wval_sel if 0 val ex if 1 val mem
