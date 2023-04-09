@@ -24,19 +24,19 @@ if (W_w_enable){
     //W_val_select actually sets the value, this current implementation just tells us that we need to set the value
     if(W_wval_sel == true){
         if(W_dst == D_src1){
-            *val_a = W_val_ex; 
-        }
-
-        else{
             *val_a = W_val_mem; 
         }
 
+        else{
+            *val_a = W_val_ex; 
+        }
+
         if(W_dst == D_src2){
-            *val_b = W_val_ex; 
+            *val_b = W_val_mem; 
         }
 
         else{
-            *val_b = W_val_mem; 
+            *val_b = W_val_ex; 
         }
         
     }
@@ -51,19 +51,19 @@ if (W_w_enable){
 if (M_w_enable){
     if(M_wval_sel == true){
         if(M_dst == D_src1){
-            *val_a = W_val_ex; 
+            *val_a = M_val_mem; //*val_a = W_val_ex; 
         }
 
         else{
-            *val_a = M_val_mem; 
+            *val_a = W_val_ex;//*val_a = M_val_mem; 
         }
 
         if(M_dst == D_src2){
-            *val_b = M_val_ex; 
+            *val_b = M_val_mem;//*val_b = M_val_ex; 
         }
 
         else{
-            *val_b = M_val_mem; 
+            *val_b = M_val_ex;//*val_b = M_val_mem; 
         }
     // *val_a = M_wval_sel ? W_val_mem : W_val_ex;
     // *val_b = M_wval_sel ? W_val_mem : W_val_ex;

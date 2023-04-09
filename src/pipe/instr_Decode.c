@@ -302,6 +302,12 @@ extract_regs(uint32_t insnbits, opcode_t op,
         //*dst = 0x0UL; 
     }
 
+    else if (op == OP_ANDS_RR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *dst = bitfield_u32(insnbits, 0, 5);
+        *src2 = bitfield_u32(insnbits, 16, 5);
+    }
+
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
@@ -311,7 +317,6 @@ extract_regs(uint32_t insnbits, opcode_t op,
             //     *src2 = XZR_NUM; 
             // }
     }
-
 
     else if (op == OP_CMP_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
