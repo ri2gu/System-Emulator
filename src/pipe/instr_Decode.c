@@ -49,7 +49,7 @@ generate_DXMW_control(opcode_t op,
 
     //if it's a register operation
     X_sigs->valb_sel = (op == OP_B_COND || op == OP_B || op == OP_BL || op == OP_RET || op == OP_MOVK || 
-                op == OP_MOVZ || op == OP_HLT || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_NOP || op == OP_LDUR || 
+                op == OP_MOVZ || op == OP_HLT || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_SUBS_RR|| op == OP_NOP || op == OP_LDUR || 
                 op == OP_STUR || op == OP_ADRP || op == OP_LSR || op == OP_LSL || op == OP_ASR) ? 0 : 1; 
 
     //setting setCC based off slides 
