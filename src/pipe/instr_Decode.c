@@ -241,20 +241,20 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     //grouping together here based on formats 
     if (op == OP_LSR || op == OP_ASR){
-        *src1 = 0x0UL; 
+        *src1 = XZR_NUM;
         *src2 = bitfield_u32(insnbits, 5, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
     else if(op == OP_ADD_RI){
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = 0x0UL;
+        *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
     else if(op == OP_SUB_RI){
         *dst = bitfield_u32(insnbits, 0, 5);
-        *src1 = XZR_NUM; 
+        *src1 = XZR_NUM;
         *src2 = bitfield_u32(insnbits, 5, 5);
     }
 
@@ -274,7 +274,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if(op == OP_STUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = bitfield_u32(insnbits, 0, 5);
-        *dst = 0x0UL; 
+        *dst = XZR_NUM;
 
     }
 
@@ -283,7 +283,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src1 = XZR_NUM;
         *src2 = bitfield_u32(insnbits, 16, 5);
             if(*src2 == 31){
-                *src2 = XZR_NUM; 
+                *src2 = XZR_NUM;
             }
         *dst = bitfield_u32(insnbits, 0, 5);
     }
@@ -299,7 +299,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_NOP){
         *src1 = XZR_NUM;
         *src2 = XZR_NUM;
-        *dst = 0x0UL; 
+        *dst = XZR_NUM;
     }
 
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
@@ -308,7 +308,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src2 = bitfield_u32(insnbits, 16, 5);
 
             if(op == OP_ORR_RR && (*src2 == 31)){
-                *src2 = XZR_NUM; 
+                *src2 = XZR_NUM;
             }
     }
 
@@ -328,7 +328,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
-        //*dst = XZR_NUM;
+        *dst = XZR_NUM;
     }
 
     else if(op == OP_BL){
@@ -338,15 +338,15 @@ extract_regs(uint32_t insnbits, opcode_t op,
     }
 
     else if(op == OP_ERROR){
-        *dst = XZR_NUM; 
+        *dst = XZR_NUM;
         *src1 = XZR_NUM;
-        *src2 = XZR_NUM; 
+        *src2 = XZR_NUM;
     }
 
     else if(op == OP_HLT){
-        *dst = 0x0UL; 
-        *src1 = 0x0UL;
-        *src2 = 0x0UL; 
+        *dst = XZR_NUM; 
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM;
     }
     
     return;
