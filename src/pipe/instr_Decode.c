@@ -49,7 +49,7 @@ generate_DXMW_control(opcode_t op,
 
     //if it's a register operation
     X_sigs->valb_sel = (op == OP_B_COND || op == OP_B || op == OP_BL || op == OP_RET || op == OP_MOVK || 
-                op == OP_MOVZ || op == OP_HLT || op == OP_ADD_RI || op == OP_NOP || op == OP_LDUR || 
+                op == OP_MOVZ || op == OP_HLT || op == OP_ADD_RI || op == OP_SUB_RI || op == OP_NOP || op == OP_LDUR || 
                 op == OP_STUR || op == OP_ADRP || op == OP_LSR || op == OP_LSL || op == OP_ASR) ? 0 : 1; 
 
     //setting setCC based off slides 
@@ -168,8 +168,11 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //Other computations just do their respective instructions
     //B, BL, B.cond (addition to determine branch_target)
-    if(op == OP_B || op == OP_B_COND){
+    if(op == OP_B){
         *ALU_op = PLUS_OP; 
+    }
+    if (op == OP_B_COND){
+        *ALU_op = PASS_A_OP; 
     }
 
     if(op == OP_BL){
@@ -267,7 +270,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     //Same formats 
     else if (op == OP_LDUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = *src1; 
+        *src2 = XZR_NUM;  
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -302,7 +305,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
         //*dst = 0x0UL; 
     }
 
-    else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
+    else if ((op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
         *src2 = bitfield_u32(insnbits, 16, 5);
@@ -310,6 +313,12 @@ extract_regs(uint32_t insnbits, opcode_t op,
             // if(op == OP_ORR_RR && (*src2 == 31)){
             //     *src2 = XZR_NUM; 
             // }
+    }
+
+    else if(op == OP_SUBS_RR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *dst = bitfield_u32(insnbits, 0, 5);
+        *src2 = bitfield_u32(insnbits, 16, 5);
     }
 
 

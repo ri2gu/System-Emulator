@@ -95,7 +95,7 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         //by the time the x stage ends, you know you predicted incorrectly 
         //therefore you can't let whatever is in F and D continue to x so bubble
         pipe_control_stage(S_DECODE, true, false);  
-        pipe_control_stage(S_FETCH, false, true); 
+        pipe_control_stage(S_EXECUTE, true, false); 
 
         //D_out -> status = STAT_BUB; 
 
