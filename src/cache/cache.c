@@ -40,16 +40,17 @@ int clean_eviction_count = 0;
 
 /* STUDENT TO-DO: add more globals, structs, macros if necessary */
 uword_t next_lru;
+int LRU_count = 0; 
 
 // log base 2 of a number.
 // Useful for getting certain cache parameters
-// static size_t _log(size_t x) {
-//   size_t result = 0;
-//   while(x>>=1)  {
-//     result++;
-//   }
-//   return result;
-// }
+static size_t _log(size_t x) {
+  size_t result = 0;
+  while(x>>=1)  {
+    result++;
+  }
+  return result;
+}
 
 /*
  * Initialize the cache according to specified arguments
@@ -135,8 +136,21 @@ void free_cache(cache_t *cache) {
  */
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
     /* your implementation */
+        unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
+        uword_t address = addr >> _log(cache->B);
+        uword_t index = address % S;
+        uword_t tag = addr >> (_log(cache ->B) + _log(S));
+        // calculate block address and set index in slides
+        // instead of j, use set index
+        // if find then increment, also increment lru, set cache lru to lru count
+        for (unsigned int j = 0; j < cache->A; j++) {
+        if (cache->sets[index].lines[j].tag == tag && cache->sets[index].lines[j].valid) {
+            return &(cache->sets[index].lines[j]);
+        }
+    }
     
     return NULL;
+
 }
 
 /* STUDENT TO-DO:
@@ -145,7 +159,20 @@ cache_line_t *get_line(cache_t *cache, uword_t addr) {
  */
 cache_line_t *select_line(cache_t *cache, uword_t addr) {
     /* your implementation */
-    return NULL;
+    unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
+    uword_t address = addr >> _log(cache->B);
+    uword_t index = address % S;
+    cache_line_t *line = &(cache->sets[index].lines[0]);
+    
+        for (unsigned int j = 0; j < cache->A; j++) {
+        if (!cache->sets[index].lines[j].valid) {
+            return &(cache->sets[index].lines[j]);
+        }
+        if (cache->sets[index].lines[j].lru < line->lru) {
+            line = &(cache->sets[index].lines[j]);
+        }
+    }
+    return line;
 }
 
 /*  STUDENT TO-DO:
@@ -154,7 +181,15 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
     /* your implementation */
-    return false;
+    cache_line_t *cache_line = get_line(cache, addr);
+    //checks if the addr is hit, we should be able to write then 
+    if (cache_line && operation == WRITE) {
+        //indicating whether or not the block has been modified/dirtied 
+        cache_line->dirty = true;
+    }
+
+    //if cache_line isn't null, thiss means we hit the address in the cache 
+    return cache_line != NULL;
 }
 
 /*  STUDENT TO-DO:
@@ -164,8 +199,43 @@ bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
 evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation, byte_t *incoming_data) {
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
     evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
+    unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
     /* your implementation */
-    return NULL;
+    cache_line_t *line = select_line(cache, addr);
+    evicted_line->valid = false;
+    if (line->valid) {
+        if (line->data == NULL) {
+            evicted_line->data = line->data;
+        } else {
+            memcpy(evicted_line->data, line->data, cache -> B);
+        }
+    
+        uword_t address = addr >> _log(cache->B);
+        uword_t index = address % S;
+        evicted_line->addr = (line->tag << (_log(cache->B) + _log(S))) | (index << _log(cache->B));
+        evicted_line->dirty = line->dirty;
+        evicted_line->valid = line->valid;
+        if (evicted_line->dirty) {
+            dirty_eviction_count++;
+        } else {
+            clean_eviction_count++;
+        }
+    }
+    if (incoming_data == NULL) {
+        line->data = incoming_data;
+    } else {
+        memcpy(line->data, incoming_data, cache -> B);
+    }
+    if (operation == READ) {
+        line->dirty = false;
+    } else {
+        line->dirty = true;
+    }
+    line->tag = addr >> (_log(cache->B) + _log(S));
+    line->valid = true;
+    LRU_count++;
+    line->lru = LRU_count;
+    return evicted_line;
 }
 
 /* STUDENT TO-DO:
@@ -174,6 +244,18 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     /* Your implementation */
+    cache_line_t *line = get_line(cache, addr);
+    //getting the block size 
+    size_t B = (size_t)(cache-> B); 
+    byte_t offset = addr % B;
+    word_t val = 0;
+    
+    for (int i = 0; i < 8; i++) {
+        word_t b = line->data[offset+i] & 0xFF;
+        val = val | (b <<(8*i));
+    }
+    *dest = val;
+
 }
 
 /* STUDENT TO-DO:
@@ -182,6 +264,17 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     /* Your implementation */
+    //getting the line of data
+    cache_line_t *temp = get_line(cache, addr);
+    //getting the block size 
+    size_t B = (size_t)(cache-> B); //is this squared or not 
+    //calculating the offset 
+    byte_t offset = addr % B;
+    //setting 8 bytes in the cache to the val at pos 
+    for (int i = 0; i < 8; i++) {
+        temp->data[offset+i] = (byte_t)val & 0xFF;
+        val >>= 8;
+    }
 }
 
 /*
@@ -198,3 +291,15 @@ void access_data(cache_t *cache, uword_t addr, operation_t operation)
     if(!check_hit(cache, addr, operation))
         free(handle_miss(cache, addr, operation, NULL));
 }
+
+//block size is capital B, which is always 2^b
+// a memory byte address d translates into an equivalent pair (k, f)
+//  - where k is a memory block address and f is the block offset (d = k * 2^b + f)
+//the offset is always one lower than the block size (B)
+//d instead of a for the memory byte address 
+
+
+
+//still need to implement handle_miss
+//implement select_line
+//implement get_line 
