@@ -40,7 +40,7 @@ int clean_eviction_count = 0;
 
 /* STUDENT TO-DO: add more globals, structs, macros if necessary */
 uword_t next_lru;
-int LRU_count = 0; 
+int LRU_cnt = 0; 
 
 // log base 2 of a number.
 // Useful for getting certain cache parameters
@@ -137,18 +137,21 @@ void free_cache(cache_t *cache) {
 cache_line_t *get_line(cache_t *cache, uword_t addr) {
     /* your implementation */
         unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
-        uword_t address = addr >> _log(cache->B);
-        uword_t index = address % S;
-        uword_t tag = addr >> (_log(cache ->B) + _log(S));
-        // calculate block address and set index in slides
-        // instead of j, use set index
-        // if find then increment, also increment lru, set cache lru to lru count
-        for (unsigned int j = 0; j < cache->A; j++) {
-        if (cache->sets[index].lines[j].tag == tag && cache->sets[index].lines[j].valid) {
-            return &(cache->sets[index].lines[j]);
+        size_t b = _log(cache ->B); 
+        //getting the block address and setting the index 
+        uword_t addy = addr >> b;
+        uword_t ind = addy % S;
+        uword_t tag = addr >> (b + _log(S));        
+
+        for (unsigned int i = 0; i < cache->A; i++) {
+        //if there's a hit 
+            cache_line_t *cac_line = &cache->sets[ind].lines[i];
+            if (cac_line -> valid && cache->sets[ind].lines[i].tag == tag){
+                //return the cache line holding the address 
+                return &(cache->sets[ind].lines[i]);
+            }
         }
-    }
-    
+    //if there's a miss 
     return NULL;
 
 }
@@ -160,18 +163,22 @@ cache_line_t *get_line(cache_t *cache, uword_t addr) {
 cache_line_t *select_line(cache_t *cache, uword_t addr) {
     /* your implementation */
     unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
-    uword_t address = addr >> _log(cache->B);
-    uword_t index = address % S;
+    uword_t addy = addr >> _log(cache->B);
+    uword_t index = addy % S;
     cache_line_t *line = &(cache->sets[index].lines[0]);
     
-        for (unsigned int j = 0; j < cache->A; j++) {
-        if (!cache->sets[index].lines[j].valid) {
-            return &(cache->sets[index].lines[j]);
+    //going through everything in the cache 
+    for (int i = 0; i < cache->A; i++) {
+        //finding something to fill: the smallest lru
+        if (cache->sets[index].lines[i].lru < line->lru) {
+            line = &(cache->sets[index].lines[i]);
         }
-        if (cache->sets[index].lines[j].lru < line->lru) {
-            line = &(cache->sets[index].lines[j]);
+        //finding something to fill: a cache line that isn't valid 
+        if (cache->sets[index].lines[i].valid == false) {
+            return &(cache->sets[index].lines[i]);
         }
     }
+
     return line;
 }
 
@@ -181,15 +188,23 @@ cache_line_t *select_line(cache_t *cache, uword_t addr) {
  */
 bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
     /* your implementation */
-    cache_line_t *cache_line = get_line(cache, addr);
-    //checks if the addr is hit, we should be able to write then 
-    if (cache_line && operation == WRITE) {
-        //indicating whether or not the block has been modified/dirtied 
-        cache_line->dirty = true;
-    }
+    cache_line_t *line = get_line(cache, addr);
 
-    //if cache_line isn't null, thiss means we hit the address in the cache 
-    return cache_line != NULL;
+    if (line == NULL) {
+        //if the line is null, just update the miss count since no hits 
+        miss_count++;
+        return false;
+    }   
+    else {
+        //if the line is not null, then there's a hit, so update counts
+        //additionally, if the operation is write, then you have to update that its been modified 
+        hit_count++;
+        LRU_cnt++;
+        line->lru = LRU_cnt;
+        line->dirty = (operation == WRITE) ? true : line->dirty;
+        return true;
+}
+
 }
 
 /*  STUDENT TO-DO:
@@ -198,44 +213,46 @@ bool check_hit(cache_t *cache, uword_t addr, operation_t operation) {
  */
 evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation, byte_t *incoming_data) {
     evicted_line_t *evicted_line = malloc(sizeof(evicted_line_t));
-    evicted_line->data = (byte_t *) calloc(cache->B, sizeof(byte_t));
+    evicted_line -> data = (byte_t *) calloc(cache->B, sizeof(byte_t));
     unsigned int S = (unsigned int) cache->C / (cache->A * cache->B);
+    size_t s = _log(S); 
+    size_t b = _log(cache->B); 
+
     /* your implementation */
-    cache_line_t *line = select_line(cache, addr);
-    evicted_line->valid = false;
-    if (line->valid) {
-        if (line->data == NULL) {
-            evicted_line->data = line->data;
+    cache_line_t *line = select_line(cache, addr); // Select the cache line for the given address
+
+    evicted_line -> valid = false; // Set the valid bit of the evicted line to false
+
+    if (line->valid) { // If the selected line is valid
+        if (line->data == NULL) { // If the data in the selected line is NULL
+            evicted_line->data = line->data; // Copy the NULL data to the evicted line
         } else {
-            memcpy(evicted_line->data, line->data, cache -> B);
+            memcpy(evicted_line->data, line->data, cache -> B); // Copy the data from the selected line to the evicted line
         }
-    
-        uword_t address = addr >> _log(cache->B);
-        uword_t index = address % S;
-        evicted_line->addr = (line->tag << (_log(cache->B) + _log(S))) | (index << _log(cache->B));
-        evicted_line->dirty = line->dirty;
-        evicted_line->valid = line->valid;
-        if (evicted_line->dirty) {
-            dirty_eviction_count++;
-        } else {
-            clean_eviction_count++;
-        }
+
+        uword_t address = addr >> b; // Calc addy by right-shifting addr by b bits
+        uword_t index = address % S; // Calc the index by taking the modulus of the addy
+        evicted_line->addr = (line->tag << (b + s)) | (index << b); // Calculate the address for the evicted line
+        evicted_line->dirty = line->dirty; // Copy the dirty bit from line to evicted line
+        evicted_line->valid = line->valid; // Copy the valid bit from line to evicted line
+
+        // Depending on if the evicted line was dirty, update counts
+        evicted_line->dirty ? dirty_eviction_count++ : clean_eviction_count++;
     }
-    if (incoming_data == NULL) {
-        line->data = incoming_data;
+
+    if (incoming_data != NULL) { // If incoming data is not NULL
+        memcpy(line->data, incoming_data, cache -> B); // Copy the incoming data to the data field of the selected line
     } else {
-        memcpy(line->data, incoming_data, cache -> B);
+        line->data = incoming_data; // Otherwise, set the data field of the selected line to NULL
     }
-    if (operation == READ) {
-        line->dirty = false;
-    } else {
-        line->dirty = true;
-    }
-    line->tag = addr >> (_log(cache->B) + _log(S));
-    line->valid = true;
-    LRU_count++;
-    line->lru = LRU_count;
-    return evicted_line;
+
+    line->dirty = (operation == READ) ? 0 : 1; // Set the dirty bit of the selected line based on the operation (READ or WRITE)
+    line->tag = addr >> (b + s); // Calculate the tag by right-shifting addr by (b + s) bits
+    line->valid = true; // Set the valid bit of the selected line to true
+    LRU_cnt++; // Increment the LRU count
+    line->lru = LRU_cnt; // Set the LRU count of the selected line to the current LRU count
+
+    return evicted_line; // Return the evicted line
 }
 
 /* STUDENT TO-DO:
@@ -245,16 +262,10 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     /* Your implementation */
     cache_line_t *line = get_line(cache, addr);
-    //getting the block size 
-    size_t B = (size_t)(cache-> B); 
-    byte_t offset = addr % B;
-    word_t val = 0;
-    
-    for (int i = 0; i < 8; i++) {
-        word_t b = line->data[offset+i] & 0xFF;
-        val = val | (b <<(8*i));
-    }
-    *dest = val;
+    //calculate the offset 
+    unsigned int offset = addr % _log(cache->B); 
+    //the destination should be the data plus the offset 
+    *dest = *((word_t*)(line->data + offset));
 
 }
 
@@ -265,16 +276,12 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     /* Your implementation */
     //getting the line of data
-    cache_line_t *temp = get_line(cache, addr);
-    //getting the block size 
-    size_t B = (size_t)(cache-> B); //is this squared or not 
+    cache_line_t *line = get_line(cache, addr);
     //calculating the offset 
-    byte_t offset = addr % B;
-    //setting 8 bytes in the cache to the val at pos 
-    for (int i = 0; i < 8; i++) {
-        temp->data[offset+i] = (byte_t)val & 0xFF;
-        val >>= 8;
-    }
+    byte_t offset = addr % _log(cache->B); 
+    //setting val = to value at data + offset
+    val =  *(word_t*)(line->data + offset); 
+    //....what is the difference between setting and getting i don't get it 
 }
 
 /*
@@ -296,10 +303,6 @@ void access_data(cache_t *cache, uword_t addr, operation_t operation)
 // a memory byte address d translates into an equivalent pair (k, f)
 //  - where k is a memory block address and f is the block offset (d = k * 2^b + f)
 //the offset is always one lower than the block size (B)
-//d instead of a for the memory byte address 
+//if you want to get lower case S, make sure you take the log of the S that was defined above 
+//look at cache.h for definitions 
 
-
-
-//still need to implement handle_miss
-//implement select_line
-//implement get_line 
