@@ -47,43 +47,43 @@ void pipe_control_stage(proc_stage_t stage, bool bubble, bool stall) {
     }
 }
 
-bool check_ret_hazard(opcode_t D_opcode) {
-    //squash the results of that fetch stage, by bubbling the decode stage 
-    //so here we check if the opcode is a ret 
-    if(D_opcode == OP_RET){
-        return true; 
-    }
-    return false;
-}
+// bool check_ret_hazard(opcode_t D_opcode) {
+//     //squash the results of that fetch stage, by bubbling the decode stage 
+//     //so here we check if the opcode is a ret 
+//     if(D_opcode == OP_RET){
+//         return true; 
+//     }
+//     return false;
+// }
 
-bool check_mispred_branch_hazard(opcode_t X_opcode, bool X_condval) {
-    //happens in the x stage, if branch was cond but cond evaluated to false 
-    //by the time the x stage ends, you know you predicted incorrectly 
-    //therefore you can't let whatever is in F and D continue to x so bubble
-    if(X_opcode == OP_B_COND && X_condval == false){
-        return true; 
-    }
-    return false;
-}
+// bool check_mispred_branch_hazard(opcode_t X_opcode, bool X_condval) {
+//     //happens in the x stage, if branch was cond but cond evaluated to false 
+//     //by the time the x stage ends, you know you predicted incorrectly 
+//     //therefore you can't let whatever is in F and D continue to x so bubble
+//     if(X_opcode == OP_B_COND && X_condval == false){
+//         return true; 
+//     }
+//     return false;
+// }
 
-bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
-                           opcode_t X_opcode, uint8_t X_dst) {
-    //when an instruction is trying to read in a value from reg that hasn't been read from mem yet
-    //forwarding won't work for load cases?
-    //have to check for possible forwarding 
-    bool check = D_src1 == X_dst; 
-    bool check2 = D_src2 == X_dst;
-    bool finalCheck = check || check2; 
-    if(X_opcode == OP_LDUR && finalCheck){
-        return true; 
-    }
-    return false;
-}
+// bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
+//                            opcode_t X_opcode, uint8_t X_dst) {
+//     //when an instruction is trying to read in a value from reg that hasn't been read from mem yet
+//     //forwarding won't work for load cases?
+//     //have to check for possible forwarding 
+//     bool check = D_src1 == X_dst; 
+//     bool check2 = D_src2 == X_dst;
+//     bool finalCheck = check || check2; 
+//     if(X_opcode == OP_LDUR && finalCheck){
+//         return true; 
+//     }
+//     return false;
+// }
 
 comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2, 
                             opcode_t X_opcode, uint8_t X_dst, bool X_condval) {
     /* Students: Change this code */
-    //bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS; 
+    bool f_stall = F_out->status == STAT_HLT || F_out->status == STAT_INS; 
     pipe_control_stage(S_FETCH, false, false);
     pipe_control_stage(S_DECODE, false, false);
     pipe_control_stage(S_EXECUTE, false, false);
@@ -91,21 +91,21 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     pipe_control_stage(S_WBACK, false, false);
 
 
-    if(check_mispred_branch_hazard(X_opcode, X_condval)){
-        //by the time the x stage ends, you know you predicted incorrectly 
-        //therefore you can't let whatever is in F and D continue to x so bubble
-        pipe_control_stage(S_DECODE, true, false);  
-        pipe_control_stage(S_EXECUTE, true, false); 
+    // if(check_mispred_branch_hazard(X_opcode, X_condval)){
+    //     //by the time the x stage ends, you know you predicted incorrectly 
+    //     //therefore you can't let whatever is in F and D continue to x so bubble
+    //     pipe_control_stage(S_DECODE, true, false);  
+    //     pipe_control_stage(S_EXECUTE, true, false); 
 
         //D_out -> status = STAT_BUB; 
 
-    }
+   // }
 
-    if(check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)){
-        //bubble the execute stage and stall the earlier stages 
-        pipe_control_stage(S_FETCH, false, true);
-        pipe_control_stage(S_DECODE, false, true); 
-        pipe_control_stage(S_EXECUTE, true, false); 
+    // if(check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)){
+    //     //bubble the execute stage and stall the earlier stages 
+    //     pipe_control_stage(S_FETCH, false, true);
+    //     pipe_control_stage(S_DECODE, false, true); 
+    //     pipe_control_stage(S_EXECUTE, true, false); 
         // pipe_control_stage(S_DECODE, true, true);  
         // pipe_control_stage(S_MEMORY, false, true); 
         //  pipe_control_stage(S_WBACK, false, true); 
@@ -113,16 +113,16 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
 
         
         //D_out -> status = STAT_BUB; 
-    }
+    //}
 
 
     //calling all of the functions here 
-    if(check_ret_hazard(D_opcode)){
-        //squash the results of that fetch stage by bubbling
-        pipe_control_stage(S_DECODE, true, false); 
-        //F_out -> status = STAT_BUB; 
-    }
-    return; 
+    // if(check_ret_hazard(D_opcode)){
+    //     //squash the results of that fetch stage by bubbling
+    //     pipe_control_stage(S_DECODE, true, false); 
+    //     //F_out -> status = STAT_BUB; 
+    // }
+    // return; 
 }
 
 //computational instruction (x, then called a def use hazard)
