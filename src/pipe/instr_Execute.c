@@ -57,9 +57,6 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     if(in -> op == OP_RET){
         out -> status = STAT_INS; 
     }
-    if(in->op == OP_BL) {
-        in->val_a = in->seq_succ_PC;
-    }
 
     // i think im supposed to first see if set_cc is true or not
     // if it is then check against god knows what in cond_t cond

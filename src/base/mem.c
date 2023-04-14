@@ -195,7 +195,7 @@ static uint64_t _mem_read_cache(const uint64_t addr, const unsigned width) {
             uint8_t *block = calloc(B, 1);
             for (int j = 0; j < B; j++) {
                 uint64_t addr_j = (addr & ~(B-1)) + j;
-                block[j] = _mem_read_LE(addr_j, 1);
+                block[j] = (uint8_t)_mem_read_LE(addr_j, 1);
             }
             // hopefully they properly implemented writing incoming data to the cache
             evicted_line_t *evicted = handle_miss(guest.cache, block_address, READ, block);
@@ -224,7 +224,7 @@ uint64_t _mem_read(const uint64_t addr, const unsigned width) {
         return _mem_read_special(addr, width);
 
     // Use the cache if it exists and this is not an instruction.
-    if (guest.cache && addr >= seg_starts[DATA_SEG]) {
+    if (guest.cache && addr >= guest.mem->seg_start_addr[DATA_SEG]) {
         return _mem_read_cache(addr, width);
     }
 
@@ -264,7 +264,12 @@ static write_ret_code_t _mem_write_cache(const uint64_t addr, const uint64_t dat
             // get evicted line from cache,
             // incoming data is NULL here because the students are supposed
             // to implement the write themselves.
-            evicted_line_t *evicted = handle_miss(guest.cache, block_address, WRITE, NULL);
+            uint8_t *block = calloc(B, 1);
+            for (int j = 0; j < B; j++) {
+                uint64_t addr_j = block_address + j;
+                block[j] = (uint8_t)_mem_read_LE(addr_j, 1);
+            }
+            evicted_line_t *evicted = handle_miss(guest.cache, block_address, WRITE, block);
             // if evicted line is dirty, write changes back to memory
             if (evicted->valid && evicted->dirty) {
                 for (int j = 0; j < B; j++) {
@@ -288,7 +293,7 @@ write_ret_code_t _mem_write(const uint64_t addr, const uint64_t data, const unsi
         return _mem_write_special(addr, data, width);
 
     // Use the cache if it exists and this is not an instruction.
-    if (guest.cache && addr >= seg_starts[TEXT_SEG] + 0x10000) {//seg_starts[DATA_SEG]) { hack for now
+    if (guest.cache && addr >= guest.mem->seg_start_addr[DATA_SEG]) {
         return _mem_write_cache(addr, data, width);
     }
 
