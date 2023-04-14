@@ -64,7 +64,7 @@ generate_DXMW_control(opcode_t op,
     op == OP_SUBS_RR || op == OP_ORR_RR || op == OP_LDUR) ? 1 : 0;
 
     if(op == OP_ERROR){
-        W_sigs -> w_enable = false; 
+        W_sigs -> w_enable = 1; 
     }
 
 
@@ -240,24 +240,51 @@ extract_regs(uint32_t insnbits, opcode_t op,
              uint8_t *src1, uint8_t *src2, uint8_t *dst) {
 
     //grouping together here based on formats 
-    if (op == OP_ADD_RI || op == OP_SUB_RI || op == OP_LSL || op == OP_LSR || op == OP_UBFM || op == OP_ASR){
-        // bits 9-5 = source register number
+    if (op == OP_LSR || op == OP_ASR){
+        *src1 = 0x0UL; 
+        *src2 = bitfield_u32(insnbits, 5, 5);
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    else if(op == OP_ADD_RI){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = bitfield_u32(insnbits,16, 5);;
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    else if(op == OP_SUB_RI){
+        *dst = bitfield_u32(insnbits, 0, 5);
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = 0x0UL;
+    }
+
+    else if(op == OP_LSL){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
     //Same formats 
-    else if (op == OP_LDUR || op == OP_STUR){
+    else if (op == OP_LDUR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = *src1; 
+        *dst = bitfield_u32(insnbits, 0, 5);
+    }
+
+    else if(op == OP_STUR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = bitfield_u32(insnbits, 0, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
+
     }
 
     // MOVZ and ADRP instructions have a 16-bit immediate value and a 5-bit destination register
     else if (op == OP_MVN){
         *src1 = XZR_NUM;
         *src2 = bitfield_u32(insnbits, 16, 5);
+            if(*src2 == 31){
+                *src2 = XZR_NUM; 
+            }
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -272,14 +299,24 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_NOP){
         *src1 = XZR_NUM;
         *src2 = XZR_NUM;
+        //*dst = 0x0UL; 
+    }
+
+    else if (op == OP_ANDS_RR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *dst = bitfield_u32(insnbits, 0, 5);
+        *src2 = bitfield_u32(insnbits, 16, 5);
     }
 
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
         *src2 = bitfield_u32(insnbits, 16, 5);
-    }
 
+            if(op == OP_ORR_RR && (*src2 == 31)){
+                *src2 = XZR_NUM; 
+            }
+    }
 
     else if (op == OP_CMP_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
@@ -296,24 +333,27 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
-        *dst = XZR_NUM;
+        //*dst = XZR_NUM;
     }
 
     else if(op == OP_BL){
         *dst = 30; 
+        *src2 = XZR_NUM;
+        *src1 = XZR_NUM;
     }
 
     else if(op == OP_ERROR){
-        *src2 = 0; 
+        *dst = XZR_NUM; 
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM; 
+    }
+
+    else if(op == OP_HLT){
+        *dst = XZR_NUM; 
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM; 
     }
     
-    //everything else 32 val unused 
-    // else{
-    //     *src1 = XZR_NUM;
-    //     *src2 = XZR_NUM;
-    //     *dst = XZR_NUM;
-    // }
-
     return;
 }
 
@@ -342,16 +382,24 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     out -> op = in -> op;
     out -> print_op = in -> print_op; 
 
+   
     generate_DXMW_control(in -> op, &D_signal, &(out -> X_sigs), &(out -> M_sigs), &(out -> W_sigs)); 
     extract_regs(in -> insnbits, in -> op, &src1, &src2, &(out -> dst)); 
     decide_alu_op(in -> op, &(out-> ALU_op));
-    regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
-    extract_immval(in -> insnbits, in -> op, &(out -> val_imm));
+    extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
 
-    forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
-            W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
-            W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
-    //special cases depending on opcodes 
+    regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
+
+    //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
+    //if(W_in->status == STAT_AOK){
+        //regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
+    //}
+    //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
+
+    // forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
+    //         W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
+    //         W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
+    // //special cases depending on opcodes 
     //setting cond value here 
     if(in -> op == OP_B_COND){
         out -> cond = (cond_t)bitfield_u32(in -> insnbits, 0, 4); 
@@ -371,19 +419,16 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out -> status = STAT_INS; 
     }
 
-    if(out -> op == OP_HLT){
-        out -> op = OP_HLT; 
-        in -> status = OP_HLT; 
+    // if(out -> op == OP_HLT){
+    //     //out -> op = OP_HLT; 
+    //     in -> status = OP_HLT; 
+    //     //out -> status = OP_HLT; 
+    // }
+    if (out->op == OP_HLT) { //do it for every status 
+        in->status = STAT_HLT;
+        out->status = STAT_HLT;
     }
-    // if (out->op == OP_HLT) { //do it for every status 
-    //     in->status = STAT_HLT;
-    //     out->status = STAT_HLT;
-    // }
 
-    // if(in -> op == OP_ERROR && in -> status == STAT_INS){
-    //     out -> op = OP_HLT;
-    //     out -> status = OP_HLT; 
-    // }
 
     // if(out -> op == OP_HLT && in -> status == STAT_INS){
     //     in -> op = OP_HLT; 
