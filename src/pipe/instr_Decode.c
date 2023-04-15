@@ -313,8 +313,28 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *dst = bitfield_u32(insnbits, 0, 5);
         *src2 = bitfield_u32(insnbits, 16, 5);
 
-            if(op == OP_ORR_RR && (*src2 == 31)){
-                *src2 = XZR_NUM; 
+            // original
+            // if(op == OP_ORR_RR && (*src2 == 31)){
+            //     *src2 = XZR_NUM; // 32
+            // }
+            // as far as i can tell theres nothing happening in this 
+            
+
+            // what im getting is
+            // xn aka src1 is 11111 which is the stack pointer
+            // in the case that we're using RR format it changes to ZXR 
+            // bc of the two register operands
+            // but in RI format bc of the immediate it stays
+
+            // OK W THIS VAL A IS CORRECT BUT VAL B IS WRONG
+            if(op == OP_ORR_RR) {
+                if (*src2 == 31) {
+                    *src2 = XZR_NUM;
+                }
+                if (*src1 == 31) {
+                    *src1 = XZR_NUM;
+
+                }
             }
     }
 
