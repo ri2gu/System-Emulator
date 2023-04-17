@@ -1,3 +1,4 @@
+
 /**************************************************************************
  * C S 429 system emulator
  * 
@@ -313,28 +314,8 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *dst = bitfield_u32(insnbits, 0, 5);
         *src2 = bitfield_u32(insnbits, 16, 5);
 
-            // original
-            // if(op == OP_ORR_RR && (*src2 == 31)){
-            //     *src2 = XZR_NUM; // 32
-            // }
-            // as far as i can tell theres nothing happening in this 
-            
-
-            // what im getting is
-            // xn aka src1 is 11111 which is the stack pointer
-            // in the case that we're using RR format it changes to ZXR 
-            // bc of the two register operands
-            // but in RI format bc of the immediate it stays
-
-            // OK W THIS VAL A IS CORRECT BUT VAL B IS WRONG
-            if(op == OP_ORR_RR) {
-                if (*src2 == 31) {
-                    *src2 = XZR_NUM;
-                }
-                if (*src1 == 31) {
-                    *src1 = XZR_NUM;
-
-                }
+            if(op == OP_ORR_RR && (*src2 == 31)){
+                *src2 = XZR_NUM; 
             }
     }
 
@@ -416,10 +397,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     //}
     //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
 
-    // forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
-    //         W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
-    //         W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
-    // //special cases depending on opcodes 
+    forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
+            W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
+            W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
+    //special cases depending on opcodes 
     //setting cond value here 
     if(in -> op == OP_B_COND){
         out -> cond = (cond_t)bitfield_u32(in -> insnbits, 0, 4); 
