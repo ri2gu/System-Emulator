@@ -260,6 +260,7 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  * Preconditon: addr is contained within the cache.
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
+    //this is supposed to read 
     /* Your implementation */
     cache_line_t *line = get_line(cache, addr);
     //calculate the offset 
@@ -267,21 +268,24 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     //the destination should be the data plus the offset 
     *dest = *((word_t*)(line->data + offset));
 
-}
+    
 
+}
+//ldur_stur
+//adrp_2
 /* STUDENT TO-DO:
  * Set 8 bytes in the cache to val at pos.
  * Preconditon: addr is contained within the cache.
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     /* Your implementation */
+    //this is supposed to write 
     //getting the line of data
     cache_line_t *line = get_line(cache, addr);
     //calculating the offset 
     byte_t offset = addr % _log(cache->B); 
     //setting val = to value at data + offset
     val =  *(word_t*)(line->data + offset); 
-    //....what is the difference between setting and getting i don't get it 
 }
 
 /*

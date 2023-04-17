@@ -123,6 +123,15 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_DECODE, true, false); 
         //F_out -> status = STAT_BUB; 
     }
+
+    //if in flight, then stall everything before the writeback stage 
+    if(dmem_status == IN_FLIGHT){
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, false, true);
+    }
+
     return; 
 }
 
