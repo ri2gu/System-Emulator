@@ -262,11 +262,20 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     //this is supposed to read 
     /* Your implementation */
-    cache_line_t *line = get_line(cache, addr);
-    //calculate the offset 
-    unsigned int offset = addr % _log(cache->B); 
-    //the destination should be the data plus the offset 
-    *dest = *((word_t*)(line->data + offset));
+    // cache_line_t *line = get_line(cache, addr);
+    // //calculate the offset 
+    // unsigned int offset = addr % _log(cache->B); 
+    // //the destination should be the data plus the offset 
+    // *dest = *((word_t*)(line->data + offset));
+    cache_line_t *temp = get_line(cache, addr);
+    size_t B = (size_t) cache -> B;
+    byte_t offset = addr % B;
+    word_t val = 0;
+    for (int i = 0; i < 8; i++) {
+        word_t b = temp->data[offset+i] & 0xFF;
+        val = val | (b <<(8*i));
+    }
+    *dest = val;
 
     
 
@@ -281,11 +290,20 @@ void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
     /* Your implementation */
     //this is supposed to write 
     //getting the line of data
-    cache_line_t *line = get_line(cache, addr);
-    //calculating the offset 
-    byte_t offset = addr % _log(cache->B); 
-    //setting val = to value at data + offset
-    val =  *(word_t*)(line->data + offset); 
+    // cache_line_t *line = get_line(cache, addr);
+    // //calculating the offset 
+    // byte_t offset = addr % _log(cache->B); 
+    // //setting val = to value at data + offset
+    // val =  *(word_t*)(line->data + offset); 
+    //line->data[addr % cache -> B]
+    //if it crosses cache lines (for loop: check ot see if we get line byte at a time) addres mod cache -> B 
+    cache_line_t *temp = get_line(cache, addr);
+    size_t B = (size_t) cache -> B;
+    byte_t offset = addr % B;
+    for (int i = 0; i < 8; i++) {
+        temp->data[offset+i] = (byte_t)val & 0xFF;
+        val >>= 8;
+    }
 }
 
 /*

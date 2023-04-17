@@ -281,7 +281,7 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         out->status = STAT_HLT;
     }
 
-    else{
+    else if (out -> status != STAT_BUB){
         in -> status = STAT_AOK; 
         out -> status = STAT_AOK; 
     }
