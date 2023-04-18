@@ -22,7 +22,7 @@ comb_logic_t forward_reg(uint8_t D_src1, uint8_t D_src2, uint8_t X_dst, uint8_t 
 //W_in
 if (W_w_enable){
     //W_val_select actually sets the value, this current implementation just tells us that we need to set the value
-    if(W_wval_sel == true){
+    if(W_wval_sel != true){
         if(W_dst == D_src1){
             *val_a = W_val_mem; 
         }
@@ -49,7 +49,7 @@ if (W_w_enable){
 
 //M_out
 if (M_w_enable){
-    if(M_wval_sel == true){
+    if(M_wval_sel != true){
         if(M_dst == D_src1){
             *val_a = M_val_mem;
         }

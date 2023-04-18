@@ -169,11 +169,13 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     //Other computations just do their respective instructions
     //B, BL, B.cond (addition to determine branch_target)
-    if(op == OP_B || op == OP_B_COND){
+    if(op == OP_B){
         *ALU_op = PLUS_OP; 
     }
 
-    if(op == OP_BL){
+
+
+    if(op == OP_BL || op == OP_B_COND){
         X_in -> val_a = X_in -> seq_succ_PC; 
         *ALU_op = PASS_A_OP; 
 
@@ -400,7 +402,7 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     // forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_in -> val_ex,
     //         W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
     //         W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
-    //special cases depending on opcodes 
+    // //special cases depending on opcodes 
     //setting cond value here 
     if(in -> op == OP_B_COND){
         out -> cond = (cond_t)bitfield_u32(in -> insnbits, 0, 4); 
