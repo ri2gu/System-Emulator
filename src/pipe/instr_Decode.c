@@ -92,7 +92,7 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
     }
 
     //in the case that the format of the instruction is in RI format
-    else if(op == OP_ADD_RI || op == OP_SUB_RI || op == OP_ASR || op == OP_UBFM){
+    else if(op == OP_ADD_RI || op == OP_SUB_RI || op == OP_ASR){
         *imm = bitfield_u32(insnbits, 10, 12); 
         return;
     }
@@ -108,9 +108,21 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
         *imm = bitfield_u32(insnbits, 5, 16);   
         return; 
     }
+
         //asr depends on bits idk
-    else if(op == OP_LSR || op == OP_LSL || op == OP_ASR){
+    else if(op == OP_LSR || op == OP_ASR){
         *imm = bitfield_u32(insnbits, 16, 5); 
+        return; 
+    }
+
+    // else if(op == OP_LSL){
+    //     *imm = 64 - bitfield_u32(insnbits, 16, 5);
+    //     return; 
+    // }
+
+    else if(op == OP_LSL){
+        *imm = 64 - bitfield_s64(insnbits, 16, 5);
+        //*imm = 63 - bitfield_u32(insnbits, 10, 5);
         return; 
     }
 
@@ -180,7 +192,7 @@ decide_alu_op(opcode_t op, alu_op_t *ALU_op) {
 
     }
 
-    if(op == OP_RET){
+    if(op == OP_RET || op == OP_B){
         *ALU_op = PASS_A_OP; 
     }
 
@@ -301,7 +313,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_NOP){
         *src1 = XZR_NUM;
         *src2 = XZR_NUM;
-        *dst = 0x0UL; 
+        //*dst = 0x0UL; 
     }
 
     else if (op == OP_ANDS_RR){
@@ -309,6 +321,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *dst = bitfield_u32(insnbits, 0, 5);
         *src2 = bitfield_u32(insnbits, 16, 5);
     }
+
 
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
@@ -332,6 +345,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *dst = bitfield_u32(insnbits, 0, 5);
     }
     
+
     else if (op == OP_RET){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *src2 = XZR_NUM;
@@ -343,8 +357,13 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src2 = XZR_NUM;
         *src1 = XZR_NUM;
     }
+    else if (op == OP_B_COND || op == OP_B){
+        *src1 = XZR_NUM;
+        *src2 = XZR_NUM; 
+    }
 
-    else if(op == OP_ERROR || op == OP_HLT){
+
+    else if(op == OP_ERROR || op == OP_HLT || op == OP_B){
         *dst = XZR_NUM; 
         *src1 = XZR_NUM;
         *src2 = XZR_NUM; 
