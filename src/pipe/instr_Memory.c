@@ -48,7 +48,7 @@ comb_logic_t memory_instr(m_instr_impl_t *in, w_instr_impl_t *out) {
 
     // generated in decode and used in memory 1 if read 0 not
     // dmem_read dmem_write 1 if write 0 not (if read or write)
-    if(((in -> M_sigs.dmem_read == true ||in -> M_sigs.dmem_write == true)) && out -> status == STAT_AOK){
+    if(((in -> M_sigs.dmem_read == true ||in -> M_sigs.dmem_write == true))){
         //this is where the null pointer write attempt is coming into play 
         dmem(in -> val_ex, in -> val_b, in -> M_sigs.dmem_read, 
             in -> M_sigs.dmem_write, &(out -> val_mem), &dmem_error); 

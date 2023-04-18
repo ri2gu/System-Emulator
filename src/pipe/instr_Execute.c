@@ -82,10 +82,10 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     // so cond comes into alu then leaves as x_condval!!!!
     //based on decode, it depends on val_b and val_imm vals
     alu(in->val_a, (in->X_sigs.valb_sel ? in->val_b : in->val_imm), in->val_hw, 
-        in->ALU_op, in->X_sigs.set_CC, in->cond, &(out->val_ex), &(out->cond_holds));
+        in->ALU_op, in->X_sigs.set_CC, in->cond, &(out->val_ex), &X_condval);
 
     //then you actually want to set condval (can finally stop failing those lol)
-    X_condval = out -> cond_holds; 
+    out -> cond_holds = X_condval; 
 
     // switch (in->ALU_op) {
     //     case PLUS_OP:
@@ -147,6 +147,9 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     out->seq_succ_PC = in->seq_succ_PC;
     out->val_b = in->val_b;
     out->status = in->status;
+    if(in -> op == OP_BL){
+        in -> val_a = in -> seq_succ_PC; 
+    }
     
     return;
 }

@@ -301,7 +301,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
     else if (op == OP_NOP){
         *src1 = XZR_NUM;
         *src2 = XZR_NUM;
-        //*dst = 0x0UL; 
+        *dst = 0x0UL; 
     }
 
     else if (op == OP_ANDS_RR){
@@ -344,13 +344,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src1 = XZR_NUM;
     }
 
-    else if(op == OP_ERROR){
-        *dst = XZR_NUM; 
-        *src1 = XZR_NUM;
-        *src2 = XZR_NUM; 
-    }
-
-    else if(op == OP_HLT){
+    else if(op == OP_ERROR || op == OP_HLT){
         *dst = XZR_NUM; 
         *src1 = XZR_NUM;
         *src2 = XZR_NUM; 
@@ -376,8 +370,8 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
 comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     d_ctl_sigs_t D_signal; 
-    uint8_t src1; 
-    uint8_t src2; 
+    uint8_t src1 = 31; 
+    uint8_t src2 = 31; 
     //uint8_t dst; 
     out -> status = in -> status;
     out -> seq_succ_PC = in -> seq_succ_PC; 
@@ -390,7 +384,9 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     decide_alu_op(in -> op, &(out-> ALU_op));
     extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
 
-    regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
+    bool w_enable = (W_out -> W_sigs.w_enable && W_out -> status == STAT_AOK); 
+    if(in -> op != OP_ADRP){
+    regfile(src1, src2, W_out -> dst, W_wval, w_enable, &(out -> val_a), &(out -> val_b));
 
     //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
     //if(W_in->status == STAT_AOK){
@@ -399,8 +395,9 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
 
     forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_out -> val_ex,
-            W_in -> val_mem, M_in -> W_sigs.wval_sel, W_in -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_in -> W_sigs.w_enable, 
+            W_out -> val_mem, M_out -> W_sigs.wval_sel, W_out -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_out -> W_sigs.w_enable, 
             W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
+    }
     // //special cases depending on opcodes 
     //setting cond value here 
     if(in -> op == OP_B_COND){
@@ -409,10 +406,17 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
     //setting val_hw for mov vals
     out->val_hw = (in->op == OP_MOVZ || in->op == OP_MOVK) ? bitfield_u32(in->insnbits, 21, 2) << 4 : 0;
+    if(in -> op == OP_ADD_RI || in -> op == OP_SUB_RI){
+        out -> val_hw = bitfield_u32(in -> insnbits, 22, 1); 
+    }
+
+    if(in -> op == OP_MOVK){
+        out -> val_a &= ~(0xFFFFUL << out -> val_hw); 
+    }
 
     //set it equal to current_PC essentially?
     if(in -> op == OP_ADRP){
-        out -> val_a = in -> this_PC; 
+        out -> val_a = in -> seq_succ_PC; 
     }
 
     //error handling 
