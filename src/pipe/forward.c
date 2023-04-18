@@ -28,13 +28,13 @@ if (W_w_enable){
                 *val_a = W_val_mem; 
             }
             else{
-            *val_a = W_val_ex; 
+                *val_a = W_val_ex; 
             }
         }
 
 
 
-        else if(W_dst == D_src2){
+        if(W_dst == D_src2){
             if(W_wval_sel == true){
                 *val_a = W_val_mem; 
             }
