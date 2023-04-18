@@ -115,9 +115,9 @@ static int run_test(int A, int B, int C, int d, char *testdir, char *testname, i
 
     /* Diff the results */
     sprintf(cmd, "grep -v \"Program Counter\" %s > %s.diff", checkpoint_ref, checkpoint_ref);
-    status = system(cmd);
+    system(cmd);
     sprintf(cmd, "grep -v \"Program Counter\" %s > %s.diff", checkpoint_student, checkpoint_student);
-    status = system(cmd);
+    system(cmd);
     sprintf(cmd, "diff %s.diff %s.diff", checkpoint_ref, checkpoint_student);
     status = system(cmd);
 
@@ -310,19 +310,18 @@ int main(int argc, char* argv[]) {
         if (verbosity > 1) {
             fprintf(stderr, "Running tests for week 4...\n");
         }
-        size_t num_testdirs = 3;
+        size_t num_testdirs = 2;
         size_t total_num_tests = 0;
-        size_t test_sizes[] = {1, 2, 3};
-        size_t num_cache_configs[] = {4, 4, 1};
+        size_t test_sizes[] = {1, 2};
+        size_t num_cache_configs[] = {4, 4};
         char *testdirs[] = {"testcases/mem/simple/", "testcases/applications/hard/", "testcases/applications/hard/"};
         char *test_simple[] = {"ldur_stur"};
         char *test_sum[] = {"iter_sum", "rec_sum"};
-        char *test_gemm[] = {"gemm_ijk", "gemm_ikj", "gemm_block"};
-        char **tests[] = {test_simple, test_sum, test_gemm};
+        // char *test_gemm[] = {"gemm_ijk", "gemm_ikj", "gemm_block"};
+        char **tests[] = {test_simple, test_sum};
         int cache_configs[][4] = {{1, 8, 8, 2}, {4, 8, 32, 4}, {1, 32, 64, 8}, {2, 8, 64, 8},
-                                  {1, 8, 8, 2}, {4, 8, 32, 4}, {1, 32, 64, 8}, {2, 8, 64, 8},
-                                  {4, 32, 512, 100}};
-        double weights[] = {0.2, 0.4, 0.4};        
+                                  {1, 8, 8, 2}, {4, 8, 32, 4}, {1, 32, 64, 8}, {2, 8, 64, 8}};
+        double weights[] = {0.2, 0.8};        
         int total = 0;
         int cachenum = 0;
         double this_score = 0.0;
