@@ -179,7 +179,7 @@ void fix_instr_aliases(uint32_t insnbits, opcode_t *op) {
     else if (itable[top11bits] == OP_UBFM)
     {
         
-        if (bitfield_u32(insnbits, 10, 12) != 31)
+        if (bitfield_u32(insnbits, 10, 5) != 31)
         {
             *op = OP_LSL;
         }

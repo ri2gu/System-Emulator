@@ -107,9 +107,6 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         //therefore you can't let whatever is in F and D continue to x so bubble
         pipe_control_stage(S_DECODE, true, false);  
         pipe_control_stage(S_EXECUTE, true, false); 
-
-        //D_out -> status = STAT_BUB; 
-
     }
 
     if(check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)){
@@ -117,13 +114,6 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true); 
         pipe_control_stage(S_EXECUTE, true, false); 
-        // pipe_control_stage(S_DECODE, true, true);  
-        // pipe_control_stage(S_MEMORY, false, true); 
-        //  pipe_control_stage(S_WBACK, false, true); 
-
-
-        
-        //D_out -> status = STAT_BUB; 
     }
 
 
@@ -131,7 +121,7 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     if(check_ret_hazard(D_opcode)){
         //squash the results of that fetch stage by bubbling
         pipe_control_stage(S_DECODE, true, false); 
-        //F_out -> status = STAT_BUB; 
+        
     }
 
     //if in flight, then stall everything before the writeback stage 

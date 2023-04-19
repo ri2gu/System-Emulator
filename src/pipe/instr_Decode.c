@@ -61,7 +61,7 @@ generate_DXMW_control(opcode_t op,
     //operations and shifts opocodes
     W_sigs->w_enable = (op == OP_UBFM || op == OP_ADRP || op == OP_ANDS_RR || op == OP_MVN || op == OP_EOR_RR || op == OP_MOVZ || 
     op == OP_MOVK || op == OP_SUB_RI || op == OP_ADD_RI || op == OP_LSL || op == OP_LSR || op == OP_ASR || op == OP_ADDS_RR || 
-    op == OP_SUBS_RR || op == OP_ORR_RR || op == OP_LDUR) ? 1 : 0;
+    op == OP_SUBS_RR || op == OP_ORR_RR || op == OP_LDUR || op == OP_BL) ? 1 : 0;
 
     if(op == OP_ERROR){
         W_sigs -> w_enable = 1; 
@@ -127,7 +127,7 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
     }
 
     //entrire thing is imm?
-    else if (op == OP_BL || op == OP_B){
+    else if (op == OP_B){ //removed bl, put back if errors happen
         *imm = bitfield_u32(insnbits, 0, 26); 
         return; 
     }
@@ -405,15 +405,8 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
 
     bool w_enable = (W_out -> W_sigs.w_enable && W_out -> status == STAT_AOK); 
     if(in -> op != OP_ADRP){
-    regfile(src1, src2, W_out -> dst, W_wval, w_enable, &(out -> val_a), &(out -> val_b));
-
-    //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
-    //if(W_in->status == STAT_AOK){
-        //regfile(src1, src2, W_out -> dst, W_wval, W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b));
-    //}
-    //extract_immval(in -> insnbits, in -> op, &(out -> val_imm)); 
-
-    forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_out -> val_ex,
+        regfile(src1, src2, W_out -> dst, W_wval, w_enable, &(out -> val_a), &(out -> val_b));
+        forward_reg(src1, src2, X_out -> dst, M_out -> dst, W_out -> dst, M_in -> val_ex, M_out -> val_ex, W_in -> val_mem, W_out -> val_ex,
             W_out -> val_mem, M_out -> W_sigs.wval_sel, W_out -> W_sigs.wval_sel, X_out -> W_sigs.w_enable, M_out -> W_sigs.w_enable, 
             W_out -> W_sigs.w_enable, &(out -> val_a), &(out -> val_b)); 
     }
@@ -444,20 +437,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
         out -> status = STAT_INS; 
     }
 
-    // if(out -> op == OP_HLT){
-    //     //out -> op = OP_HLT; 
-    //     in -> status = OP_HLT; 
-    //     //out -> status = OP_HLT; 
-    // }
     if (out->op == OP_HLT) { //do it for every status 
         in->status = STAT_HLT;
         out->status = STAT_HLT;
     }
-
-
-    // if(out -> op == OP_HLT && in -> status == STAT_INS){
-    //     in -> op = OP_HLT; 
-    // }
 
     return;
 }
