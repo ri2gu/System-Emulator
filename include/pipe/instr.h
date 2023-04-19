@@ -89,7 +89,7 @@ typedef enum opcode {
     OP_RET,
     // Misc
     OP_HLT,
-    OP_ERROR = -1
+     OP_ERROR = -1
 } opcode_t;
 // TODO: Add enum for 1-hot encoding
 

@@ -80,6 +80,20 @@ bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     return false;
 }
 
+bool check_def_use_hazard(uint8_t D_src1, uint8_t D_src2, opcode_t X_opcode, uint8_t M_dst){
+    bool check = D_src1 == M_dst; 
+    bool check2 = D_src2 == M_dst;
+    bool finalCheck = check || check2; 
+    if((X_opcode == OP_ADRP || X_opcode == OP_ADD_RI || X_opcode == OP_ADDS_RR || X_opcode == OP_SUB_RI || X_opcode == OP_SUBS_RR
+        || X_opcode == OP_CMP_RR || X_opcode == OP_MVN || X_opcode == OP_ORR_RR || X_opcode == OP_EOR_RR || X_opcode == OP_ANDS_RR
+        || X_opcode == OP_TST_RR || X_opcode == OP_LSL || X_opcode == OP_LSR) && finalCheck){
+            return true; 
+        }
+
+    return false; 
+}
+
+
 bool error(stat_t status){
     return status == STAT_ADR || status == STAT_INS || status == STAT_HLT; 
 }
@@ -121,8 +135,15 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     if(check_ret_hazard(D_opcode)){
         //squash the results of that fetch stage by bubbling
         pipe_control_stage(S_DECODE, true, false); 
-        
     }
+
+    // if(check_def_use_hazard(D_src1, D_src2, X_opcode, X_dst)){
+    //     pipe_control_stage(S_FETCH, false, true);
+    //     pipe_control_stage(S_DECODE, false, true); 
+    //     pipe_control_stage(S_EXECUTE, false, true);  
+    //     pipe_control_stage(S_MEMORY, true, false);
+
+    // }
 
     //if in flight, then stall everything before the writeback stage 
     if(dmem_status == IN_FLIGHT){

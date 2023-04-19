@@ -322,14 +322,13 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src2 = bitfield_u32(insnbits, 16, 5);
     }
 
-
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
         *src2 = bitfield_u32(insnbits, 16, 5);
 
-            if(op == OP_ORR_RR && (*src2 == 31)){
-                *src2 = XZR_NUM; 
+            if(op == OP_ORR_RR && (*src1 == 31)){
+                *src1 = XZR_NUM; 
             }
     }
 
