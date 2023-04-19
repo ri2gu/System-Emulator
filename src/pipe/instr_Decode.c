@@ -121,13 +121,13 @@ extract_immval(uint32_t insnbits, opcode_t op, int64_t *imm) {
     // }
 
     else if(op == OP_LSL){
-        *imm = 64 - bitfield_s64(insnbits, 16, 5);
+        *imm = 64 - bitfield_u32(insnbits, 16, 6);
         //*imm = 63 - bitfield_u32(insnbits, 10, 5);
         return; 
     }
 
     //entrire thing is imm?
-    else if (op == OP_B){ //removed bl, put back if errors happen
+    else if (op == OP_B || op == OP_BL){ //removed bl, put back if errors happen
         *imm = bitfield_u32(insnbits, 0, 26); 
         return; 
     }
@@ -255,8 +255,8 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     //grouping together here based on formats 
     if (op == OP_LSR || op == OP_ASR){
-        *src1 = 0x0UL; 
-        *src2 = bitfield_u32(insnbits, 5, 5);
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = XZR_NUM; 
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 
@@ -322,6 +322,12 @@ extract_regs(uint32_t insnbits, opcode_t op,
         *src2 = bitfield_u32(insnbits, 16, 5);
     }
 
+    else if (op == OP_CMP_RR){
+        *src1 = bitfield_u32(insnbits, 5, 5);
+        *src2 = bitfield_u32(insnbits, 16, 5);
+        *dst = XZR_NUM;
+    }
+
     else if (op == OP_SUBS_RR || (op >= OP_ORR_RR && op <= OP_TST_RR) || op == OP_ADDS_RR){
         *src1 = bitfield_u32(insnbits, 5, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
@@ -332,11 +338,6 @@ extract_regs(uint32_t insnbits, opcode_t op,
             }
     }
 
-    else if (op == OP_CMP_RR){
-        *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = bitfield_u32(insnbits, 16, 5);
-        *dst = XZR_NUM;
-    }
 
     else if (op == OP_MOVZ || op == OP_ADRP){
         *src1 = XZR_NUM;
@@ -419,6 +420,10 @@ comb_logic_t decode_instr(d_instr_impl_t *in, x_instr_impl_t *out) {
     out->val_hw = (in->op == OP_MOVZ || in->op == OP_MOVK) ? bitfield_u32(in->insnbits, 21, 2) << 4 : 0;
     if(in -> op == OP_ADD_RI || in -> op == OP_SUB_RI){
         out -> val_hw = bitfield_u32(in -> insnbits, 22, 1); 
+    }
+
+    if(in -> op == OP_BL){
+        out -> val_a = in -> seq_succ_PC; 
     }
 
     if(in -> op == OP_MOVK){

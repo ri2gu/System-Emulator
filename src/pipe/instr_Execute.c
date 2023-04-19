@@ -65,9 +65,9 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
     out->seq_succ_PC = in->seq_succ_PC;
     out->val_b = in->val_b;
     out->status = in->status;
-    if(in -> op == OP_BL){
-        in -> val_a = in -> seq_succ_PC; 
-    }
+    // if(in -> op == OP_BL){
+    //     out -> val_ex = in -> seq_succ_PC; 
+    // }
     
     return;
 }

@@ -218,10 +218,6 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
     //select_PC(in -> pred_PC, X_in -> op, X_in -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
     select_PC(in -> pred_PC, X_out -> op, X_out -> val_a, M_out -> op, M_out -> cond_holds, M_out -> seq_succ_PC, &current_PC);
 
-
-    // what about instead of predict_PC, pred_PC from struct f_instr_impl
-    // I messed that up, you use X_in for the D_op and D_vala
-
     /* 
      * Students: This case is for generating HLT instructions
      * to stop the pipeline. Only write your code in the **else** case. 
@@ -245,18 +241,22 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
 
         else{
             uint32_t top11 = bitfield_u32(out->insnbits, 21, 11);
-            fix_instr_aliases(out->insnbits, &itable[top11]);
+            //fix_instr_aliases(out->insnbits, &itable[top11]);
             out -> op = itable[top11]; 
-            out -> print_op = itable[top11]; 
+            fix_instr_aliases(out->insnbits, &(out -> op));
+            out -> print_op = out -> op; 
+
             predict_PC(current_PC, out->insnbits, out -> op, &(F_PC), &(out->seq_succ_PC)); 
 
+            in -> status = STAT_AOK; 
+            out -> status = STAT_AOK; 
             //setting current to successor
             if(out -> op == OP_ADRP){
                 out -> this_PC = out -> seq_succ_PC; 
             }
 
             //changing op and status to account for running into an error operation 
-            if(out -> op == OP_ERROR){
+            if(out -> op == OP_ERROR || imem_err == true){
                 out -> op = OP_NOP; 
                 out -> status = STAT_INS; 
             }
@@ -270,6 +270,8 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
 
     }
 
+    
+
     //trying to solve program counter issue here?
     if(out -> status == STAT_INS){
         in -> status = STAT_INS; 
@@ -280,10 +282,10 @@ comb_logic_t fetch_instr(f_instr_impl_t *in, d_instr_impl_t *out) {
         out->status = STAT_HLT;
     }
 
-    else{
-        in -> status = STAT_AOK; 
-        out -> status = STAT_AOK; 
-    }
+    // else{
+    //     in -> status = STAT_AOK; 
+    //     out -> status = STAT_AOK; 
+    // }
     return;
 }
 
