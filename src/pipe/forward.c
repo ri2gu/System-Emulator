@@ -36,7 +36,7 @@ if (W_w_enable){
 
         if(W_dst == D_src2){
             if(W_wval_sel == true){
-                *val_a = W_val_mem; 
+                *val_b = W_val_mem; 
             }
             else{
                 *val_b = W_val_ex; 
