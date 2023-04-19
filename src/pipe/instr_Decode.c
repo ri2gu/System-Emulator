@@ -262,7 +262,7 @@ extract_regs(uint32_t insnbits, opcode_t op,
 
     else if(op == OP_ADD_RI){
         *src1 = bitfield_u32(insnbits, 5, 5);
-        *src2 = bitfield_u32(insnbits,16, 5);;
+        *src2 = bitfield_u32(insnbits,16, 5);
         *dst = bitfield_u32(insnbits, 0, 5);
     }
 

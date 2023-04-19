@@ -261,11 +261,19 @@ evicted_line_t *handle_miss(cache_t *cache, uword_t addr, operation_t operation,
  */
 void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
     /* Your implementation */
-    cache_line_t *line = get_line(cache, addr);
-    //calculate the offset 
-    unsigned int offset = addr % _log(cache->B); 
-    //the destination should be the data plus the offset 
-    *dest = *((word_t*)(line->data + offset));
+    // cache_line_t *line = get_line(cache, addr);
+    // //calculate the offset 
+    // unsigned int offset = addr % _log(cache->B); 
+    // //the destination should be the data plus the offset 
+    // *dest = *((word_t*)(line->data + offset));
+    cache_line_t *temp = get_line(cache, addr);
+    byte_t offset = addr % cache -> B;
+    word_t val = 0;
+    for (int i = 0; i < 8; i++) {
+        word_t b = temp->data[offset+i] & 0xFF;
+        val = val | (b <<(8*i));
+    }
+    *dest = val;
 
 }
 
@@ -274,14 +282,19 @@ void get_word_cache(cache_t *cache, uword_t addr, word_t *dest) {
  * Preconditon: addr is contained within the cache.
  */
 void set_word_cache(cache_t *cache, uword_t addr, word_t val) {
-    /* Your implementation */
-    //getting the line of data
-    cache_line_t *line = get_line(cache, addr);
-    //calculating the offset 
-    byte_t offset = addr % _log(cache->B); 
-    //setting val = to value at data + offset
-    val =  *(word_t*)(line->data + offset); 
-    //....what is the difference between setting and getting i don't get it 
+    // /* Your implementation */
+    // //getting the line of data
+    // cache_line_t *line = get_line(cache, addr);
+    // //calculating the offset 
+    // byte_t offset = addr % _log(cache->B); 
+    // //setting val = to value at data + offset
+    // val =  *(word_t*)(line->data + offset); 
+    cache_line_t *temp = get_line(cache, addr);
+    byte_t offset = addr % cache -> B;
+    for (int i = 0; i < 8; i++) {
+        temp->data[offset+i] = (byte_t)val & 0xFF;
+        val >>= 8;
+    }
 }
 
 /*
