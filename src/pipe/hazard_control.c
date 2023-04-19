@@ -159,3 +159,6 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
 
 //computational instruction (x, then called a def use hazard)
 //load instruction (gen in m, then a load-use hazard)
+
+//check if the registers are the same for val_a and val_b, if they're different, then step through 
+//forwarding and check that everything is working correctly 

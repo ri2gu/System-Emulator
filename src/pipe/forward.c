@@ -78,19 +78,11 @@ if (X_w_enable){
         *val_a = X_val_ex; 
     }
 
-    else{
-        *val_a = *val_a; 
-    }
-
-
     //is X_out's dst register == D_out's source 2 register? X_out's dst = x4 != D_out's source 2 (x5). So change X_in's val_b to M_in's computed val_ex. 
     if(X_dst == D_src2){
         *val_b = X_val_ex; 
     }
 
-    else{
-        *val_b = *val_b;
-    }
     return;
 }
 }
