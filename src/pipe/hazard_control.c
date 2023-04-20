@@ -80,18 +80,18 @@ bool check_load_use_hazard(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
     return false;
 }
 
-bool check_def_use_hazard(uint8_t D_src1, uint8_t D_src2, opcode_t X_opcode, uint8_t M_dst){
-    bool check = D_src1 == M_dst; 
-    bool check2 = D_src2 == M_dst;
-    bool finalCheck = check || check2; 
-    if((X_opcode == OP_ADRP || X_opcode == OP_ADD_RI || X_opcode == OP_ADDS_RR || X_opcode == OP_SUB_RI || X_opcode == OP_SUBS_RR
-        || X_opcode == OP_CMP_RR || X_opcode == OP_MVN || X_opcode == OP_ORR_RR || X_opcode == OP_EOR_RR || X_opcode == OP_ANDS_RR
-        || X_opcode == OP_TST_RR || X_opcode == OP_LSL || X_opcode == OP_LSR) && finalCheck){
-            return true; 
-        }
+// bool check_def_use_hazard(uint8_t D_src1, uint8_t D_src2, opcode_t X_opcode, uint8_t M_dst){
+//     bool check = D_src1 == M_dst; 
+//     bool check2 = D_src2 == M_dst;
+//     bool finalCheck = check || check2; 
+//     if((X_opcode == OP_ADRP || X_opcode == OP_ADD_RI || X_opcode == OP_ADDS_RR || X_opcode == OP_SUB_RI || X_opcode == OP_SUBS_RR
+//         || X_opcode == OP_CMP_RR || X_opcode == OP_MVN || X_opcode == OP_ORR_RR || X_opcode == OP_EOR_RR || X_opcode == OP_ANDS_RR
+//         || X_opcode == OP_TST_RR || X_opcode == OP_LSL || X_opcode == OP_LSR) && finalCheck){
+//             return true; 
+//         }
 
-    return false; 
-}
+//     return false; 
+// }
 
 
 bool error(stat_t status){
@@ -114,6 +114,45 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_EXECUTE, false, true);
         pipe_control_stage(S_MEMORY, false, true);
         pipe_control_stage(S_WBACK, false, true);
+        return; 
+    }
+        //handling exceptions 
+    if((X_out->status != STAT_AOK && X_out->status != STAT_BUB)){
+        X_in -> X_sigs.set_CC = false;  
+        // pipe_control_stage(S_FETCH, false, true);
+        // pipe_control_stage(S_DECODE, false, true);
+        // pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, true, false);
+        return;
+    }
+
+    if((W_in->status != STAT_AOK && W_in->status != STAT_BUB)){
+        //X_in -> X_sigs.set_CC = false;
+        // pipe_control_stage(S_FETCH, false, true);
+        // pipe_control_stage(S_DECODE, false, true);
+        // pipe_control_stage(S_EXECUTE, false, true);
+        // pipe_control_stage(S_MEMORY, false, true);
+        pipe_control_stage(S_WBACK, false, true);
+        return; 
+    }
+
+    if((W_out->status != STAT_AOK && W_out->status != STAT_BUB)){
+        //X_in -> X_sigs.set_CC = false;
+        // pipe_control_stage(S_FETCH, false, true);
+        // pipe_control_stage(S_DECODE, false, true);
+        // pipe_control_stage(S_EXECUTE, false, true);
+        // pipe_control_stage(S_MEMORY, false, true);
+        pipe_control_stage(S_WBACK, false, true);
+        return; 
+    }
+
+    if(dmem_status == IN_FLIGHT){
+        pipe_control_stage(S_FETCH, false, true);
+        pipe_control_stage(S_DECODE, false, true);
+        pipe_control_stage(S_EXECUTE, false, true);
+        pipe_control_stage(S_MEMORY, false, true);
+        pipe_control_stage(S_WBACK, true, false);
+        return; 
     }
 
     if(check_mispred_branch_hazard(X_opcode, X_condval)){
@@ -121,6 +160,7 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         //therefore you can't let whatever is in F and D continue to x so bubble
         pipe_control_stage(S_DECODE, true, false);  
         pipe_control_stage(S_EXECUTE, true, false); 
+        return; 
     }
 
     if(check_load_use_hazard(D_opcode, D_src1, D_src2, X_opcode, X_dst)){
@@ -128,37 +168,25 @@ comb_logic_t handle_hazards(opcode_t D_opcode, uint8_t D_src1, uint8_t D_src2,
         pipe_control_stage(S_FETCH, false, true);
         pipe_control_stage(S_DECODE, false, true); 
         pipe_control_stage(S_EXECUTE, true, false); 
+        return; 
     }
 
 
     //calling all of the functions here 
     if(check_ret_hazard(D_opcode)){
         //squash the results of that fetch stage by bubbling
-        pipe_control_stage(S_DECODE, true, false); 
+        pipe_control_stage(S_FETCH, false, true); 
+        pipe_control_stage(S_DECODE, true, false); //stall fetch bubble decode 
+        return; 
     }
 
-    // if(check_def_use_hazard(D_src1, D_src2, X_opcode, X_dst)){
-    //     pipe_control_stage(S_FETCH, false, true);
-    //     pipe_control_stage(S_DECODE, false, true); 
-    //     pipe_control_stage(S_EXECUTE, false, true);  
-    //     pipe_control_stage(S_MEMORY, true, false);
-
-    // }
-
+    
     //if in flight, then stall everything before the writeback stage 
-    if(dmem_status == IN_FLIGHT){
-        pipe_control_stage(S_FETCH, false, true);
-        pipe_control_stage(S_DECODE, false, true);
-        pipe_control_stage(S_EXECUTE, false, true);
-        pipe_control_stage(S_MEMORY, false, true);
-        pipe_control_stage(S_WBACK, true, false);
-    }
 
-    return; 
+
+    //return; 
 }
 
 //computational instruction (x, then called a def use hazard)
 //load instruction (gen in m, then a load-use hazard)
-
-//check if the registers are the same for val_a and val_b, if they're different, then step through 
-//forwarding and check that everything is working correctly 
+//x_out is input of execute 

@@ -51,8 +51,15 @@ comb_logic_t execute_instr(x_instr_impl_t *in, m_instr_impl_t *out) {
 
 
     //based on decode, it depends on val_b and val_imm vals
+    //boolesn checking conditions 
+    //w_in -> status != error & w_out -> status != error
+    //boolean for set_CC
+    //bool set_CC = in->X_sigs.set_CC && (out -> status == STAT_AOK || out -> status == STAT_BUB) &&(W_in -> status == STAT_AOK || W_in -> status == STAT_BUB) && (W_out -> status != STAT_AOK || W_out -> status == STAT_BUB); 
+    bool set_CC = in->X_sigs.set_CC; 
+    // set_cc = set cc and (out status is either aok or bub) and (w in status is aok or bub) and (w out is aok or bub)
+    //bool set_CC = in->X_sigs.set_CC && W_in -> status != STAT_ADR && W_out -> status != STAT_ADR; 
     alu(in->val_a, (in->X_sigs.valb_sel ? in->val_b : in->val_imm), in->val_hw, 
-        in->ALU_op, in->X_sigs.set_CC, in->cond, &(out->val_ex), &X_condval);
+        in->ALU_op, set_CC, in->cond, &(out->val_ex), &X_condval);
 
     //then you actually want to set condval
     out -> cond_holds = X_condval; 
